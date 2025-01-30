@@ -1,12 +1,16 @@
-import './App.css'
+import "./App.css";
+import MainPage from "./components/MainPage";
+import NavBar from "./components/NavBar";
 
 function App() {
-
   return (
     <>
-     <h1 className='text-3xl'>Swastik</h1>
+      <div className="mx-5">
+        <NavBar />
+        <MainPage />
+      </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
