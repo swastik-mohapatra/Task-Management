@@ -2,7 +2,6 @@ import { MdExpandMore } from "react-icons/md";
 import FilterCreateTasks from "../FilterCreateTasks";
 import {
   Accordion,
-  AccordionActions,
   AccordionDetails,
   AccordionSummary,
   Box,
@@ -11,8 +10,14 @@ import {
   Typography,
 } from "@mui/material";
 import { FiPlus } from "react-icons/fi";
+import DataTable from "./DataTable";
+import { tableData } from "../../constants/tableData";
 
 const ListView = () => {
+  const todoTasks = tableData.filter((row) => row.status === "TODO");
+  const inProgressTasks = tableData.filter((row) => row.status === "In Progress");
+  const completedTasks = tableData.filter((row) => row.status === "Completed");
+
   return (
     <>
       <div className="mt-2">
@@ -20,7 +25,7 @@ const ListView = () => {
         <div className="mt-6">
           <Divider />
           <div className="mt-4">
-            <Accordion>
+            <Accordion defaultExpanded>
               <AccordionSummary
                 expandIcon={<MdExpandMore />}
                 aria-controls="panel1-content"
@@ -30,18 +35,26 @@ const ListView = () => {
                 <Typography component="span">Todo</Typography>
               </AccordionSummary>
               <AccordionDetails
-                sx={{ height: "350px", backgroundColor: "#FFFAEA" }}
+                sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
               >
                 <Box>
-                  <Button variant="text" startIcon={<FiPlus />} sx={{ color: "#000000",textTransform:"capitalize" }}>
+                  <Button
+                    variant="text"
+                    startIcon={<FiPlus />}
+                    sx={{ color: "#000000", textTransform: "capitalize" }}
+                  >
                     Add Task
                   </Button>
-                  <Divider/>
+                  <Divider />
                 </Box>
-                No Tasks in To-Do
+                {todoTasks.length > 0 ? (
+                  <DataTable rows={todoTasks}/>
+                ) : (
+                  "No Tasks in To-Do"
+                )}
               </AccordionDetails>
             </Accordion>
-            <Accordion>
+            <Accordion defaultExpanded>
               <AccordionSummary
                 expandIcon={<MdExpandMore />}
                 aria-controls="panel2-content"
@@ -51,9 +64,13 @@ const ListView = () => {
                 <Typography component="span">In-Progress</Typography>
               </AccordionSummary>
               <AccordionDetails
-                sx={{ height: "350px", backgroundColor: "#FFFAEA" }}
+                sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
               >
-                No Tasks in Progress
+                {inProgressTasks.length > 0 ? (
+                  <DataTable rows={inProgressTasks}/>
+                ) : (
+                  "No Tasks in Progress"
+                )}
               </AccordionDetails>
             </Accordion>
             <Accordion defaultExpanded>
@@ -66,14 +83,14 @@ const ListView = () => {
                 <Typography component="span">Completed</Typography>
               </AccordionSummary>
               <AccordionDetails
-                sx={{ height: "350px", backgroundColor: "#FFFAEA" }}
+                sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
               >
-                No Tasks in Completed
+                {completedTasks.length > 0 ? (
+                  <DataTable rows={completedTasks}/>
+                ) : (
+                  "No Tasks in Completed"
+                )}
               </AccordionDetails>
-              <AccordionActions>
-                <Button>Cancel</Button>
-                <Button>Agree</Button>
-              </AccordionActions>
             </Accordion>
           </div>
         </div>
