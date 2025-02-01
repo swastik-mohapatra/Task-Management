@@ -70,4 +70,14 @@ export interface TableRow {
       price: "$99",
       weight: "0.2 lb.",
     },
+    {
+      id: 6,
+      taskName: "Birthday Party",
+      dueDate: "03/02/2025",
+      status: "Completed",
+      category: "Personal",
+      available: "No",
+      price: "$99",
+      weight: "0.2 lb.",
+    },
   ];
