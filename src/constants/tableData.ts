@@ -71,7 +71,7 @@ export interface TableRow {
       weight: "0.2 lb.",
     },
     {
-      id: 6,
+      id: 7,
       taskName: "Birthday Party",
       dueDate: "03/02/2025",
       status: "Completed",
