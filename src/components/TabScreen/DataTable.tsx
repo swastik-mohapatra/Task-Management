@@ -245,7 +245,7 @@ const DataTable = ({
           </table>
         )}
 
-        <DndContext
+        {/* <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
@@ -253,7 +253,7 @@ const DataTable = ({
           <SortableContext
             items={rows.map((row) => row.id)}
             strategy={verticalListSortingStrategy}
-          >
+          > */}
             <div className="relative overflow-auto max-h-96">
               <table className="w-full text-sm text-left">
                 <tbody>
@@ -325,8 +325,8 @@ const DataTable = ({
                 </tbody>
               </table>
             </div>
-          </SortableContext>
-        </DndContext>
+          {/* </SortableContext>
+        </DndContext> */}
       </div>
     </>
   );

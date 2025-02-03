@@ -44,8 +44,8 @@ import {
     };
   
     return (
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={rows.map((row) => row.id)}>
+      // <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      //   <SortableContext items={rows.map((row) => row.id)}>
           <Box
             sx={{
               width: "100%",
@@ -59,8 +59,8 @@ import {
               <DraggableCard key={card.id} card={card} />
             ))}
           </Box>
-        </SortableContext>
-      </DndContext>
+      //   </SortableContext>
+      // </DndContext>
     );
   };
   

@@ -16,6 +16,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^6.4.2",
     "@mui/x-date-pickers": "^7.25.0",
+    "@reduxjs/toolkit": "^2.5.1",
     "@tailwindcss/vite": "^4.0.1",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
@@ -23,7 +24,9 @@
     "react": "^18.3.1",
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.3.1",
+    "react-file-drop": "^3.1.6",
     "react-icons": "^5.4.0",
+    "react-redux": "^9.2.0",
     "tailwindcss": "^4.0.1"
   },
   "devDependencies": {

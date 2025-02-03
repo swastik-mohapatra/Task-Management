@@ -8,9 +8,11 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { CiSearch } from "react-icons/ci";
+import AddTaskModal from "./AddTaskModal";
 
 const FilterCreateTasks = () => {
   const [age, setAge] = useState("");
+  const [openAddModal, setOpenAddModal] = useState(false);
 
   const handleChange = (event: SelectChangeEvent) => {
     setAge(event.target.value as string);
@@ -97,11 +99,24 @@ const FilterCreateTasks = () => {
 
           <Button
             variant="contained"
-            sx={{ backgroundColor: "#7B1984", borderRadius: "22px", paddingX:"29px" }}
+            sx={{
+              backgroundColor: "#7B1984",
+              borderRadius: "22px",
+              paddingX: "29px",
+            }}
+            onClick={() => {
+              setOpenAddModal(!openAddModal);
+            }}
           >
             ADD TASKS
           </Button>
         </div>
+        {openAddModal && (
+          <AddTaskModal
+            openAddModal={openAddModal}
+            setOpenAddModal={setOpenAddModal}
+          />
+        )}
       </div>
     </>
   );
