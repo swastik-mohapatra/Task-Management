@@ -1,8 +1,16 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+interface TaskDetails {
+  taskId: string;
+  taskName: string;
+  description: string;
+  status: string;
+  dueDate: string;
+  createdBy: string;
+}
 
 interface SystemConfigState {
-  taskDetails: Record<string, any>;
+  taskDetails: TaskDetails;
   taskGetDetails: any[];
 }
 
@@ -16,7 +24,14 @@ interface AccessDataPayload {
 export const systemConfigReducer = createSlice({
   name: "systemConfigReducer",
   initialState: {
-    taskDetails: {},
+    taskDetails: {
+      taskId: "",
+      taskName: "",
+      description: "",
+      status: "",
+      dueDate: "",
+      createdBy: ""
+    },
     taskGetDetails:[]
   } as SystemConfigState, 
   reducers: {
