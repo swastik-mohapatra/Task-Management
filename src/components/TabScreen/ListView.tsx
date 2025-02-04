@@ -13,17 +13,22 @@ import { FiPlus } from "react-icons/fi";
 import DataTable from "./DataTable";
 import { tableData } from "../../constants/tableData";
 import { useState } from "react";
+import { useSelector } from "react-redux";
 
 const ListView = () => {
   const [addTableRow, setAddTableRow] = useState(false);
   const [addRow, setAddRow] = useState({});
   const [listRows, setListRows] = useState(tableData);
 
-  const todoTasks = listRows.filter((row) => row.status === "TODO");
-  const inProgressTasks = listRows.filter(
-    (row) => row.status === "In Progress"
+  const getTaskDetails = useSelector(
+    (state: any) => state?.systemConfigReducer?.taskGetDetails
   );
-  const completedTasks = listRows.filter((row) => row.status === "Completed");
+
+  const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
+  const inProgressTasks = getTaskDetails.filter(
+    (row) => row.statusId === "P"
+  );
+  const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
 
   return (
     <>

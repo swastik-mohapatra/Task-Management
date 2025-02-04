@@ -9,10 +9,15 @@ import {
 import { useState } from "react";
 import { CiSearch } from "react-icons/ci";
 import AddTaskModal from "./AddTaskModal";
+import { useDispatch } from "react-redux";
+import { setAccessData } from "../redux/reducers/systemConfigReducer";
 
 const FilterCreateTasks = () => {
   const [age, setAge] = useState("");
   const [openAddModal, setOpenAddModal] = useState(false);
+  const [addText, setAddText] = useState(false);
+
+  const dispatch = useDispatch()
 
   const handleChange = (event: SelectChangeEvent) => {
     setAge(event.target.value as string);
@@ -105,6 +110,8 @@ const FilterCreateTasks = () => {
               paddingX: "29px",
             }}
             onClick={() => {
+              setAddText(!addText);
+              dispatch(setAccessData({type: 'taskDetails', response: {}}))
               setOpenAddModal(!openAddModal);
             }}
           >
@@ -113,6 +120,7 @@ const FilterCreateTasks = () => {
         </div>
         {openAddModal && (
           <AddTaskModal
+          addText={addText}
             openAddModal={openAddModal}
             setOpenAddModal={setOpenAddModal}
           />

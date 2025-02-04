@@ -36,6 +36,12 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { collection, deleteDoc, doc } from "firebase/firestore";
+import { db } from "../../config/firebase";
+import { getTaskData } from "../../utils/taskGetService";
+import { useDispatch } from "react-redux";
+import AddTaskModal from "../AddTaskModal";
+import { setAccessData } from "../../redux/reducers/systemConfigReducer";
 
 interface DataTableProps {
   rows: TableRow[];
@@ -78,8 +84,10 @@ const DataTable = ({
 }: DataTableProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [currentMenuId, setCurrentMenuId] = useState<string | null>(null);
+  const [openAddModal, setOpenAddModal] = useState(false);
 
-  // Open a menu
+  const dispatch = useDispatch();
+
   const handleClickMenu = (
     event: MouseEvent<HTMLButtonElement>,
     menuId: string
@@ -88,7 +96,6 @@ const DataTable = ({
     setCurrentMenuId(menuId);
   };
 
-  // Close the menu
   const handleCloseMenu = () => {
     setAnchorEl(null);
     setCurrentMenuId(null);
@@ -114,7 +121,19 @@ const DataTable = ({
     }
   };
 
- return (
+  const deleteTask = async (id) => {
+    try {
+      const taskDoc = doc(db, "tasks", id);
+      await deleteDoc(taskDoc);
+      getTaskData(dispatch);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+    setAnchorEl(null);
+    setCurrentMenuId(null);
+  };
+
+  return (
     <>
       <div className="relative overflow-x-auto ">
         {addTableRow && (
@@ -254,79 +273,103 @@ const DataTable = ({
             items={rows.map((row) => row.id)}
             strategy={verticalListSortingStrategy}
           > */}
-            <div className="relative overflow-auto max-h-96">
-              <table className="w-full text-sm text-left">
-                <tbody>
-                  {rows.map((row) => (
-                    <DraggableRow key={row.id} row={row}>
-                      <td className="w-4 p-4">
-                        <div className="flex items-center">
-                          <input
-                            id={`checkbox-table-search-${row?.id}`}
-                            type="checkbox"
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                          />
-                        </div>
-                      </td>
-                      <td className="w-4 p-4 cursor-move">::</td>
-                      <th
-                        scope="row"
-                        className="px-6 py-4 font-medium whitespace-nowrap"
+        <div className="relative overflow-auto max-h-96">
+          <table className="w-full text-sm text-left">
+            <tbody>
+              {rows.map((row) => (
+                <DraggableRow key={row?.id} row={row}>
+                  <td className="w-4 p-4">
+                    <div className="flex items-center">
+                      <input
+                        id={`checkbox-table-search-${row?.id}`}
+                        type="checkbox"
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                    </div>
+                  </td>
+                  <td className="w-4 p-4 cursor-move">::</td>
+                  <th
+                    scope="row"
+                    className="px-6 py-4 font-medium whitespace-nowrap"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FaCircleCheck
+                        size={20}
+                        color={row.status === "Completed" ? "Green" : "Black"}
+                      />
+                      {row.taskName}
+                    </div>
+                  </th>
+                  <td className="px-6 py-4">
+                    {row?.dueDate
+                      ? dayjs(row?.dueDate)?.format("D MMM, YYYY")
+                      : ""}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Chip label={row?.status} />
+                  </td>
+                  <td className="px-6 py-4">{row?.category}</td>
+                  <td className="px-6 py-4">
+                    <IconButton
+                      aria-controls={
+                        currentMenuId === row.id ? "menu" : undefined
+                      }
+                      aria-haspopup="true"
+                      onClick={(event) => handleClickMenu(event, row?.id)}
+                    >
+                      <IoIosMore />
+                    </IconButton>
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={currentMenuId === row?.id}
+                      onClose={handleCloseMenu}
+                    >
+                      <MenuItem
+                        onClick={() => {
+                          dispatch(
+                            setAccessData({
+                              type: "taskDetails",
+                              response: {
+                                ...row,
+                                status: row?.statusId, 
+                                category: row?.categoryId,
+                              },
+                            })
+                          );
+                          setAnchorEl(null);
+                          setCurrentMenuId(null);
+                          setOpenAddModal(!openAddModal);
+                        }}
                       >
-                        <div className="flex items-center gap-2">
-                          <FaCircleCheck
-                            size={20}
-                            color={
-                              row.status === "Completed" ? "Green" : "Black"
-                            }
-                          />
-                          {row.taskName}
-                        </div>
-                      </th>
-                      <td className="px-6 py-4">{row.dueDate}</td>
-                      <td className="px-6 py-4">
-                        <Chip label={row?.status} />
-                      </td>
-                      <td className="px-6 py-4">{row?.category}</td>
-                      <td className="px-6 py-4">
-                        <IconButton
-                          aria-controls={
-                            currentMenuId === row.id ? "menu" : undefined
-                          }
-                          aria-haspopup="true"
-                          onClick={(event) => handleClickMenu(event, row.id)}
-                        >
-                          <IoIosMore />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={currentMenuId === row.id}
-                          onClose={handleCloseMenu}
-                        >
-                          <MenuItem onClick={handleCloseMenu}>
-                            <ListItemIcon>
-                              <FiEdit3 />
-                            </ListItemIcon>
-                            Edit
-                          </MenuItem>
-                          <MenuItem
-                            sx={{ color: "red" }}
-                            onClick={handleCloseMenu}
-                          >
-                            <ListItemIcon>
-                              <MdDelete color="red" />
-                            </ListItemIcon>
-                            Delete
-                          </MenuItem>
-                        </Menu>
-                      </td>
-                    </DraggableRow>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          {/* </SortableContext>
+                        <ListItemIcon>
+                          <FiEdit3 />
+                        </ListItemIcon>
+                        Edit
+                      </MenuItem>
+                      <MenuItem
+                        sx={{ color: "red" }}
+                        onClick={() => deleteTask(row?.id)}
+                      >
+                        <ListItemIcon>
+                          <MdDelete color="red" />
+                        </ListItemIcon>
+                        Delete
+                      </MenuItem>
+                    </Menu>
+                  </td>
+                </DraggableRow>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* </SortableContext>
         </DndContext> */}
+        {openAddModal && (
+          <AddTaskModal
+            openAddModal={openAddModal}
+            setOpenAddModal={setOpenAddModal}
+          />
+        )}
       </div>
     </>
   );

@@ -20,19 +20,26 @@ import {
   doc,
 } from "firebase/firestore";
 import { db, auth, storage } from "../config/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { useSelector, useDispatch } from "react-redux";
 import { setAccessData } from "../redux/reducers/systemConfigReducer";
 import dayjs from "dayjs";
+import { getTaskData } from "../utils/taskGetService";
 
 interface AddTaskModalProps {
+  addText: boolean;
   openAddModal: boolean;
   setOpenAddModal: (value: boolean) => void;
 }
 
-const AddTaskModal = ({ openAddModal, setOpenAddModal }: AddTaskModalProps) => {
+const AddTaskModal = ({
+  addText,
+  openAddModal,
+  setOpenAddModal,
+}: AddTaskModalProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const taskDetail = useSelector(
     (state: any) => state?.systemConfigReducer?.taskDetails
@@ -73,14 +80,6 @@ const AddTaskModal = ({ openAddModal, setOpenAddModal }: AddTaskModalProps) => {
     );
   };
 
-  const initialTaskDetail = {
-    taskName: "",
-    description: "",
-    category: "",
-    dueDate: null,
-    status: "",
-  };
-
   const handleChangeInput = (
     event: React.ChangeEvent<{ name?: string; value: unknown }>
   ) => {
@@ -96,7 +95,53 @@ const AddTaskModal = ({ openAddModal, setOpenAddModal }: AddTaskModalProps) => {
   };
 
   const submitTask = async () => {
-    const formattedTaskDetail = {
+    if (!taskDetail?.taskName) {
+      alert("Task name is required.");
+      return;
+    }
+
+    const fileUploadPromises = selectedFiles.map(async (file) => {
+      const fileRef = ref(
+        storage,
+        `tasks/${auth.currentUser.uid}/${file.name}`
+      );
+      await uploadBytes(fileRef, file);
+      return await getDownloadURL(fileRef);
+    });
+
+    try {
+      // const fileUrls = await Promise.all(fileUploadPromises);
+      const formattedTaskDetail = {
+        taskName: taskDetail?.taskName || "",
+        description: taskDetail?.description || "",
+        category: taskDetail?.category === "W" ? "Work" : "Personal",
+        categoryId: taskDetail?.category || "",
+        dueDate: taskDetail?.dueDate
+          ? dayjs(taskDetail?.dueDate).toISOString()
+          : null,
+        status:
+          taskDetail?.status === "T"
+            ? "TODO"
+            : taskDetail?.status === "P"
+            ? "In Progress"
+            : "Completed",
+        statusId: taskDetail?.status || "",
+        // attachments: fileUrls,
+        userId: auth?.currentUser?.uid,
+      };
+
+      await addDoc(taskCollectionRef, formattedTaskDetail);
+      getTaskData(dispatch);
+      dispatch(setAccessData({ type: "taskDetails", response: {} }));
+      setSelectedFiles([]);
+      setOpenAddModal(false);
+    } catch (err) {
+      console.error("Error adding document: ", err);
+    }
+  };
+
+  const updateTask = async (id) => {
+    const updatePayload = {
       taskName: taskDetail?.taskName || "",
       description: taskDetail?.description || "",
       category: taskDetail?.category === "W" ? "Work" : "Personal",
@@ -111,23 +156,27 @@ const AddTaskModal = ({ openAddModal, setOpenAddModal }: AddTaskModalProps) => {
           ? "In Progress"
           : "Completed",
       statusId: taskDetail?.status || "",
+      userId: auth?.currentUser?.uid,
     };
+    const taskUpdateDoc = doc(db, "tasks", id);
     try {
-      await addDoc(taskCollectionRef, formattedTaskDetail);
-      dispatch(
-        setAccessData({ type: "taskDetails", response: initialTaskDetail })
-      );
+      await updateDoc(taskUpdateDoc, updatePayload);
+      getTaskData(dispatch);
+      dispatch(setAccessData({ type: "taskDetails", response: {} }));
       setOpenAddModal(false);
     } catch (err) {
-      console.error("Error adding document: ", err);
+      console.error("Error updating document: ", err);
     }
   };
 
   return (
-    <div className="fixed top-0 left-0 w-full h-full bg-black/75 flex justify-center items-center z-[100]">
+    <div className="fixed top-0 left-0 w-full h-full bg-black/75 flex justify-center items-center z-[1000]">
       <div className="relative bg-[#FFFFFF] sm:rounded-lg shadow w-2xl mt-0 sm:mt-10 flex flex-col rounded-t-3xl">
         <div className="flex items-center justify-between p-2 md:p-3 border-b border-[#0000001A] rounded-t">
-          <h3 className="text-xl font-semibold text-gray-900">Create Task</h3>
+          <h3 className="text-xl font-semibold text-gray-900">
+            {" "}
+            {addText ? "Created Task" : "Updated Task"}
+          </h3>
           <button
             type="button"
             className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-lg w-8 h-8 flex justify-center items-center"
@@ -282,13 +331,23 @@ const AddTaskModal = ({ openAddModal, setOpenAddModal }: AddTaskModalProps) => {
           >
             Close
           </button>
-          <button
-            type="button"
-            className="text-white bg-[#7B1984] border duration-500 hover:bg-white hover:text-[#7B1984] focus:ring-4 focus:outline-none hover:border-[#7B1984] font-medium rounded-2xl text-sm px-4 py-2"
-            onClick={submitTask}
-          >
-            Create
-          </button>
+          {addText ? (
+            <button
+              type="button"
+              className="text-white bg-[#7B1984] border duration-500 hover:bg-white hover:text-[#7B1984] focus:ring-4 focus:outline-none hover:border-[#7B1984] font-medium rounded-2xl text-sm px-4 py-2"
+              onClick={submitTask}
+            >
+              Create
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="text-white bg-[#7B1984] border duration-500 hover:bg-white hover:text-[#7B1984] focus:ring-4 focus:outline-none hover:border-[#7B1984] font-medium rounded-2xl text-sm px-4 py-2"
+              onClick={()=>updateTask(taskDetail?.id)}
+            >
+              Update
+            </button>
+          )}
         </div>
       </div>
     </div>

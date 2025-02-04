@@ -3,14 +3,20 @@ import FilterCreateTasks from "../FilterCreateTasks";
 import ListCard from "./ListCard";
 import { tableData } from "../../constants/tableData";
 import { useState } from "react";
+import { useSelector } from "react-redux";
 
 const BoradView = () => {
   const [boardCards, setBoardCards] = useState(tableData);
-  const todoTasks = boardCards.filter((row) => row.status === "TODO");
-  const inProgressTasks = boardCards.filter(
-    (row) => row.status === "In Progress"
+
+  const getTaskDetails = useSelector(
+    (state: any) => state?.systemConfigReducer?.taskGetDetails
   );
-  const completedTasks = boardCards.filter((row) => row.status === "Completed");
+
+  const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
+  const inProgressTasks = getTaskDetails.filter(
+    (row) => row.statusId === "P"
+  );
+  const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");;
 
   return (
     <>
@@ -32,6 +38,7 @@ const BoradView = () => {
                 padding: "5px",
                 borderRadius: "5px",
                 fontSize: "13px",
+                marginBottom:"1.4rem"
               }}
               component="div"
             >
@@ -63,6 +70,7 @@ const BoradView = () => {
                 padding: "4px",
                 borderRadius: "5px",
                 fontSize: "13px",
+                marginBottom:"1.4rem"
               }}
               component="div"
             >
@@ -93,6 +101,7 @@ const BoradView = () => {
                 padding: "4px",
                 borderRadius: "5px",
                 fontSize: "13px",
+                marginBottom:"1.4rem"
               }}
               component="div"
             >
