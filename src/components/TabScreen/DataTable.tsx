@@ -41,7 +41,7 @@ import { db } from "../../config/firebase";
 import { getTaskData } from "../../utils/taskGetService";
 import { useDispatch } from "react-redux";
 import AddTaskModal from "../AddTaskModal";
-import { setAccessData } from "../../redux/reducers/systemConfigReducer";
+import { reorderTasks, setAccessData } from "../../redux/reducers/systemConfigReducer";
 import { useSelector } from "react-redux";
 
 interface DataTableProps {
@@ -91,19 +91,27 @@ const DataTable = ({
     (state: any) => state?.systemConfigReducer?.taskDetails
   );
 
+  const getTaskDetails = useSelector(
+    (state: any) => state?.systemConfigReducer?.taskGetDetails
+  );
+
   const dispatch = useDispatch();
 
   const taskCollectionRef = collection(db, "tasks");
 
   const handleClickMenu = (
-    event: MouseEvent<HTMLButtonElement>,
+    event: React.MouseEvent<HTMLButtonElement>,
     menuId: string
   ) => {
+    event.stopPropagation(); // Stop event from bubbling
     setAnchorEl(event.currentTarget);
     setCurrentMenuId(menuId);
   };
-
-  const handleCloseMenu = () => {
+  
+  const handleCloseMenu = (event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation(); // Prevent event bubbling
+    }
     setAnchorEl(null);
     setCurrentMenuId(null);
   };
@@ -138,12 +146,16 @@ const DataTable = ({
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
+    
     if (active.id !== over?.id) {
-      setListRows((prevRows) => {
-        const oldIndex = prevRows.findIndex((row) => row.id === active.id);
-        const newIndex = prevRows.findIndex((row) => row.id === over?.id);
-        return arrayMove(prevRows, oldIndex, newIndex);
-      });
+      const reorderedTasks = [...getTaskDetails];
+      const draggedIndex = reorderedTasks.findIndex(task => task.id === active.id);
+      const targetIndex = reorderedTasks.findIndex(task => task.id === over?.id);
+      
+      const [removed] = reorderedTasks.splice(draggedIndex, 1);
+      reorderedTasks.splice(targetIndex, 0, removed);
+      
+      dispatch(reorderTasks(reorderedTasks));
     }
   };
 
@@ -234,7 +246,8 @@ const DataTable = ({
                       {["TODO", "In Progress", "Completed"].map((status) => (
                         <MenuItem
                           key={status}
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation(); 
                             dispatch(
                               setAccessData({
                                 type: "taskDetails",
@@ -285,18 +298,17 @@ const DataTable = ({
                         },
                       }}
                     >
-                      {/* <MenuItem onClick={handleCloseMenu}>Work</MenuItem>
-                      <MenuItem onClick={handleCloseMenu}>Personal</MenuItem> */}
                       {["Work", "Personal"].map((status) => (
                         <MenuItem
                           key={status}
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation(); 
                             dispatch(
                               setAccessData({
                                 type: "taskDetails",
                                 response: {
-                                  ...taskDetail, 
-                                  category: status, 
+                                  ...taskDetail,
+                                  category: status,
                                 },
                               })
                             );
@@ -321,7 +333,7 @@ const DataTable = ({
                           borderRadius: "22px",
                           paddingX: "9px",
                         }}
-                        onClick={() =>console.log(taskDetail)}
+                        onClick={() => console.log(taskDetail)}
                       >
                         ADD
                       </Button>
@@ -339,7 +351,7 @@ const DataTable = ({
           </table>
         )}
 
-        {/* <DndContext
+        <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
@@ -347,113 +359,117 @@ const DataTable = ({
           <SortableContext
             items={rows.map((row) => row.id)}
             strategy={verticalListSortingStrategy}
-          > */}
-        <div className="relative overflow-auto max-h-96">
-          <table className="w-full text-xs text-left">
-            <colgroup>
-              <col className="w-12" /> {/* Checkbox */}
-              <col className="w-8" /> {/* Drag handle */}
-              <col className="w-1/4" /> {/* Task name */}
-              <col className="w-1/5" /> {/* Due date */}
-              <col className="w-1/6" /> {/* Status */}
-              <col className="w-1/6" /> {/* Category */}
-              <col className="w-12" /> {/* Actions */}
-            </colgroup>
-            <tbody>
-              {rows.map((row) => (
-                <DraggableRow key={row?.id} row={row}>
-                  <td className="w-4 p-4">
-                    <div className="flex items-center">
-                      <input
-                        id={`checkbox-table-search-${row?.id}`}
-                        type="checkbox"
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </div>
-                  </td>
-                  <td className="w-4 p-4 cursor-move">::</td>
-                  <th
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    <div className="flex items-center gap-2">
-                      <FaCircleCheck
-                        size={20}
-                        color={row.status === "Completed" ? "Green" : "Black"}
-                      />
-                      {row.taskName}
-                    </div>
-                  </th>
-                  <td className="px-6 py-4">
-                    {row?.dueDate
-                      ? dayjs(row?.dueDate)?.format("D MMM, YYYY")
-                      : ""}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Chip label={row?.status} />
-                  </td>
-                  <td className="px-6 py-4">{row?.category}</td>
-                  <td className="px-6 py-4">
-                    <IconButton
-                      aria-controls={
-                        currentMenuId === row.id ? "menu" : undefined
-                      }
-                      aria-haspopup="true"
-                      onClick={(event) => handleClickMenu(event, row?.id)}
-                    >
-                      <IoIosMore />
-                    </IconButton>
-                    <Menu
-                      anchorEl={anchorEl}
-                      open={currentMenuId === row?.id}
-                      onClose={handleCloseMenu}
-                      sx={{
-                        "& .MuiPaper-root": {
-                          backgroundColor: "#FFF9F9",
-                          borderColor: "#7B198426",
-                        },
-                      }}
-                    >
-                      <MenuItem
-                        onClick={() => {
-                          dispatch(
-                            setAccessData({
-                              type: "taskDetails",
-                              response: {
-                                ...row,
-                                status: row?.statusId,
-                                category: row?.categoryId,
-                              },
-                            })
-                          );
-                          setAnchorEl(null);
-                          setCurrentMenuId(null);
-                          setOpenAddModal(!openAddModal);
-                        }}
+          >
+            <div className="relative overflow-auto max-h-96">
+              <table className="w-full text-xs text-left">
+                <colgroup>
+                  <col className="w-12" />
+                  <col className="w-8" />
+                  <col className="w-1/4" />
+                  <col className="w-1/5" />
+                  <col className="w-1/6" />
+                  <col className="w-1/6" />
+                  <col className="w-12" />
+                </colgroup>
+                <tbody>
+                  {rows.map((row) => (
+                    <DraggableRow key={row?.id} row={row}>
+                      <td className="w-4 p-4">
+                        <div className="flex items-center">
+                          <input
+                            id={`checkbox-table-search-${row?.id}`}
+                            type="checkbox"
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                        </div>
+                      </td>
+                      <td className="w-4 p-4 cursor-move">::</td>
+                      <th
+                        scope="row"
+                        className="px-6 py-4 font-medium whitespace-nowrap"
                       >
-                        <ListItemIcon>
-                          <FiEdit3 />
-                        </ListItemIcon>
-                        Edit
-                      </MenuItem>
-                      <MenuItem
-                        sx={{ color: "red" }}
-                        onClick={() => deleteTask(row?.id)}
-                      >
-                        <ListItemIcon>
-                          <MdDelete color="red" />
-                        </ListItemIcon>
-                        Delete
-                      </MenuItem>
-                    </Menu>
-                  </td>
-                </DraggableRow>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* </SortableContext>
-        </DndContext> */}
+                        <div className="flex items-center gap-2">
+                          <FaCircleCheck
+                            size={20}
+                            color={
+                              row.status === "Completed" ? "Green" : "Black"
+                            }
+                          />
+                          {row.taskName}
+                        </div>
+                      </th>
+                      <td className="px-6 py-4">
+                        {row?.dueDate
+                          ? dayjs(row?.dueDate)?.format("D MMM, YYYY")
+                          : ""}
+                      </td>
+                      <td className="px-6 py-4">
+                        <Chip label={row?.status} />
+                      </td>
+                      <td className="px-6 py-4">{row?.category}</td>
+                      <td className="px-6 py-4">
+                        <IconButton
+                          aria-controls={
+                            currentMenuId === row.id ? "menu" : undefined
+                          }
+                          aria-haspopup="true"
+                          onClick={(event) => handleClickMenu(event, row?.id)}
+                        >
+                          <IoIosMore />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={currentMenuId === row?.id}
+                          onClick={(e) => e.stopPropagation()} 
+                          onClose={handleCloseMenu}
+                          sx={{
+                            "& .MuiPaper-root": {
+                              backgroundColor: "#FFF9F9",
+                              borderColor: "#7B198426",
+                            },
+                          }}
+                        >
+                          <MenuItem
+                            onClick={(event) => {
+                              event.stopPropagation(); 
+                              dispatch(
+                                setAccessData({
+                                  type: "taskDetails",
+                                  response: {
+                                    ...row,
+                                    status: row?.statusId,
+                                    category: row?.categoryId,
+                                  },
+                                })
+                              );
+                              setAnchorEl(null);
+                              setCurrentMenuId(null);
+                              setOpenAddModal(!openAddModal);
+                            }}
+                          >
+                            <ListItemIcon>
+                              <FiEdit3 />
+                            </ListItemIcon>
+                            Edit
+                          </MenuItem>
+                          <MenuItem
+                            sx={{ color: "red" }}
+                            onClick={() => deleteTask(row?.id)}
+                          >
+                            <ListItemIcon>
+                              <MdDelete color="red" />
+                            </ListItemIcon>
+                            Delete
+                          </MenuItem>
+                        </Menu>
+                      </td>
+                    </DraggableRow>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </SortableContext>
+        </DndContext>
         {openAddModal && (
           <AddTaskModal
             openAddModal={openAddModal}

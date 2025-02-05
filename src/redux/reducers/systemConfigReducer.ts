@@ -17,9 +17,10 @@ export const systemConfigReducer = createSlice({
   name: "systemConfigReducer",
   initialState: {
     taskDetails: {},
-    taskGetDetails:[],
+    taskGetDetails: [],
     loading: false,
-  } as SystemConfigState, 
+  } as SystemConfigState,
+  
   reducers: {
     setAccessData: (state, action: PayloadAction<AccessDataPayload>) => {
       state[action.payload.type] = action.payload.response;
@@ -27,8 +28,16 @@ export const systemConfigReducer = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
+    reorderTasks: (state, action: PayloadAction<any[]>) => {
+      state.taskGetDetails = action.payload;
+    }
   },
 });
 
-export const { setAccessData,setLoading } = systemConfigReducer.actions;
+export const { 
+  setAccessData, 
+  setLoading, 
+  reorderTasks 
+} = systemConfigReducer.actions;
+
 export default systemConfigReducer.reducer;

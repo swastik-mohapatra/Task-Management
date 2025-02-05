@@ -24,8 +24,6 @@ const ListView = () => {
     (state: any) => state?.systemConfigReducer?.taskGetDetails
   );
 
-  console.log(getTaskDetails)
-
   const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
   const inProgressTasks = getTaskDetails.filter((row) => row.statusId === "P");
   const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
