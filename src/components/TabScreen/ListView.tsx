@@ -25,9 +25,7 @@ const ListView = () => {
   );
 
   const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
-  const inProgressTasks = getTaskDetails.filter(
-    (row) => row.statusId === "P"
-  );
+  const inProgressTasks = getTaskDetails.filter((row) => row.statusId === "P");
   const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
 
   return (
@@ -36,6 +34,34 @@ const ListView = () => {
         <FilterCreateTasks />
         <div className="mt-6">
           <Divider />
+          <table className="w-full text-sm text-left rtl:text-right ">
+            <thead className="text-xs text-gray-700 uppercase bg-inherit dark:text-gray-400">
+              <tr>
+                <th scope="col" className="p-4">
+                  <div className="flex items-center">
+                    <input
+                      id="checkbox-all-search"
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 "/>
+                  </div>
+                </th>
+                <th scope="col" className="px-6 py-4">
+                  Task name
+                </th>
+                <th scope="col" className="px-6 py-4">
+                  Due Date
+                </th>
+                <th scope="col" className="px-6 py-4">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-4">
+                  Category
+                </th>
+                <th scope="col" className="px-6 py-4">
+                </th>
+              </tr>
+            </thead>
+          </table>
           <div className="mt-4">
             <Accordion defaultExpanded>
               <AccordionSummary
