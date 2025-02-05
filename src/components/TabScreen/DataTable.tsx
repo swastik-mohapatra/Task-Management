@@ -42,6 +42,7 @@ import { getTaskData } from "../../utils/taskGetService";
 import { useDispatch } from "react-redux";
 import AddTaskModal from "../AddTaskModal";
 import { setAccessData } from "../../redux/reducers/systemConfigReducer";
+import { useSelector } from "react-redux";
 
 interface DataTableProps {
   rows: TableRow[];
@@ -86,7 +87,13 @@ const DataTable = ({
   const [currentMenuId, setCurrentMenuId] = useState<string | null>(null);
   const [openAddModal, setOpenAddModal] = useState(false);
 
+  const taskDetail = useSelector(
+    (state: any) => state?.systemConfigReducer?.taskDetails
+  );
+
   const dispatch = useDispatch();
+
+  const taskCollectionRef = collection(db, "tasks");
 
   const handleClickMenu = (
     event: MouseEvent<HTMLButtonElement>,
@@ -101,8 +108,27 @@ const DataTable = ({
     setCurrentMenuId(null);
   };
 
-  const onChangeInput = (e, name) => {
-    setAddRow({ ...addRow, [name]: e.target.value });
+  const handleChangeDate = (date: any) => {
+    dispatch(
+      setAccessData({
+        type: "taskDetails",
+        response: { ...taskDetail, dueDate: dayjs(date).format("MM-DD-YYYY") },
+      })
+    );
+  };
+
+  const handleChangeInput = (
+    event: React.ChangeEvent<{ name?: string; value: unknown }>
+  ) => {
+    const { name, value } = event.target;
+    if (name) {
+      dispatch(
+        setAccessData({
+          type: "taskDetails",
+          response: { ...taskDetail, [name]: value },
+        })
+      );
+    }
   };
 
   const sensors = useSensors(
@@ -152,8 +178,8 @@ const DataTable = ({
                       id="standard-basic"
                       label="Task Title"
                       variant="standard"
-                      value={addRow["taskName"]}
-                      onChange={(e) => onChangeInput(e, "taskName")}
+                      value={taskDetail?.taskName || ""}
+                      onChange={handleChangeInput}
                     />
                   </th>
                   <td className="px-6 py-4">
@@ -164,10 +190,11 @@ const DataTable = ({
                           sx={{}}
                           slotProps={{ textField: { size: "small" } }}
                           value={
-                            addRow && addRow["dueDate"]
-                              ? dayjs(addRow["dueDate"])
+                            taskDetail?.dueDate
+                              ? dayjs(taskDetail?.dueDate)
                               : null
                           }
+                          onChange={handleChangeDate}
                         />
                       </DemoContainer>
                     </LocalizationProvider>
@@ -197,10 +224,32 @@ const DataTable = ({
                       MenuListProps={{
                         "aria-labelledby": "status-menu-button",
                       }}
+                      sx={{
+                        "& .MuiPaper-root": {
+                          backgroundColor: "#FFF9F9",
+                          borderColor: "#7B198426",
+                        },
+                      }}
                     >
-                      <MenuItem onClick={handleCloseMenu}>TODO</MenuItem>
-                      <MenuItem onClick={handleCloseMenu}>In Progress</MenuItem>
-                      <MenuItem onClick={handleCloseMenu}>Completed</MenuItem>
+                      {["TODO", "In Progress", "Completed"].map((status) => (
+                        <MenuItem
+                          key={status}
+                          onClick={() => {
+                            dispatch(
+                              setAccessData({
+                                type: "taskDetails",
+                                response: {
+                                  ...taskDetail,
+                                  status: status,
+                                },
+                              })
+                            );
+                            handleCloseMenu();
+                          }}
+                        >
+                          {status}
+                        </MenuItem>
+                      ))}
                     </Menu>
                   </td>
                   <td className="px-6 py-4">
@@ -229,9 +278,34 @@ const DataTable = ({
                       MenuListProps={{
                         "aria-labelledby": "category-menu-button",
                       }}
+                      sx={{
+                        "& .MuiPaper-root": {
+                          backgroundColor: "#FFF9F9",
+                          borderColor: "#7B198426",
+                        },
+                      }}
                     >
-                      <MenuItem onClick={handleCloseMenu}>Work</MenuItem>
-                      <MenuItem onClick={handleCloseMenu}>Personal</MenuItem>
+                      {/* <MenuItem onClick={handleCloseMenu}>Work</MenuItem>
+                      <MenuItem onClick={handleCloseMenu}>Personal</MenuItem> */}
+                      {["Work", "Personal"].map((status) => (
+                        <MenuItem
+                          key={status}
+                          onClick={() => {
+                            dispatch(
+                              setAccessData({
+                                type: "taskDetails",
+                                response: {
+                                  ...taskDetail, 
+                                  category: status, 
+                                },
+                              })
+                            );
+                            handleCloseMenu();
+                          }}
+                        >
+                          {status}
+                        </MenuItem>
+                      ))}
                     </Menu>
                   </td>
                   <td className="px-6 py-4"></td>
@@ -247,6 +321,7 @@ const DataTable = ({
                           borderRadius: "22px",
                           paddingX: "9px",
                         }}
+                        onClick={() =>console.log(taskDetail)}
                       >
                         ADD
                       </Button>
@@ -274,7 +349,16 @@ const DataTable = ({
             strategy={verticalListSortingStrategy}
           > */}
         <div className="relative overflow-auto max-h-96">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-xs text-left">
+            <colgroup>
+              <col className="w-12" /> {/* Checkbox */}
+              <col className="w-8" /> {/* Drag handle */}
+              <col className="w-1/4" /> {/* Task name */}
+              <col className="w-1/5" /> {/* Due date */}
+              <col className="w-1/6" /> {/* Status */}
+              <col className="w-1/6" /> {/* Category */}
+              <col className="w-12" /> {/* Actions */}
+            </colgroup>
             <tbody>
               {rows.map((row) => (
                 <DraggableRow key={row?.id} row={row}>
@@ -323,6 +407,12 @@ const DataTable = ({
                       anchorEl={anchorEl}
                       open={currentMenuId === row?.id}
                       onClose={handleCloseMenu}
+                      sx={{
+                        "& .MuiPaper-root": {
+                          backgroundColor: "#FFF9F9",
+                          borderColor: "#7B198426",
+                        },
+                      }}
                     >
                       <MenuItem
                         onClick={() => {
@@ -331,7 +421,7 @@ const DataTable = ({
                               type: "taskDetails",
                               response: {
                                 ...row,
-                                status: row?.statusId, 
+                                status: row?.statusId,
                                 category: row?.categoryId,
                               },
                             })

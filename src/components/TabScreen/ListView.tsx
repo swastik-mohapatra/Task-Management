@@ -24,6 +24,8 @@ const ListView = () => {
     (state: any) => state?.systemConfigReducer?.taskGetDetails
   );
 
+  console.log(getTaskDetails)
+
   const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
   const inProgressTasks = getTaskDetails.filter((row) => row.statusId === "P");
   const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
@@ -35,6 +37,15 @@ const ListView = () => {
         <div className="mt-6">
           <Divider />
           <table className="w-full text-sm text-left rtl:text-right ">
+            <colgroup>
+              <col className="w-12" /> 
+              <col className="w-8" /> 
+              <col className="w-1/4" /> 
+              <col className="w-1/5" /> 
+              <col className="w-1/6" /> 
+              <col className="w-1/6" /> 
+              <col className="w-12" /> 
+            </colgroup>
             <thead className="text-xs text-gray-700 uppercase bg-inherit dark:text-gray-400">
               <tr>
                 <th scope="col" className="p-4">
@@ -42,23 +53,24 @@ const ListView = () => {
                     <input
                       id="checkbox-all-search"
                       type="checkbox"
-                      className="w-4 h-4 text-blue-600 "/>
+                      className="w-4 h-4 text-blue-800 "
+                    />
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-4">
+                <th scope="col w-4 p-4"></th>
+                <th scope="col" className="">
                   Task name
                 </th>
-                <th scope="col" className="px-6 py-4">
+                <th scope="col" className="">
                   Due Date
                 </th>
-                <th scope="col" className="px-6 py-4">
+                <th scope="col" className="">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-4">
+                <th scope="col" className="">
                   Category
                 </th>
-                <th scope="col" className="px-6 py-4">
-                </th>
+                <th scope="col" className=""></th>
               </tr>
             </thead>
           </table>
