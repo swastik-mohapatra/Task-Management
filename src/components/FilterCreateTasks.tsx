@@ -6,22 +6,122 @@ import {
   Select,
   SelectChangeEvent,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
 import AddTaskModal from "./AddTaskModal";
 import { useDispatch } from "react-redux";
 import { setAccessData } from "../redux/reducers/systemConfigReducer";
+import { collection, endAt, getDocs, orderBy, query, startAt, where } from "firebase/firestore";
+import { db, auth, storage } from "../config/firebase"; 
+import { getTaskData } from "../utils/taskGetService";
+import { useSelector } from "react-redux";
 
 const FilterCreateTasks = () => {
   const [age, setAge] = useState("");
   const [openAddModal, setOpenAddModal] = useState(false);
   const [addText, setAddText] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const dispatch = useDispatch()
+
+  const selectedCategoryId = useSelector(
+    (state)=>state?.systemConfigReducer?.selectedCategory
+  )
 
   const handleChange = (event: SelectChangeEvent) => {
     setAge(event.target.value as string);
   };
+
+  // useEffect(() => {
+  //   if (searchTerm === "") {
+  //     getTaskData(dispatch);
+  //     return;
+  //   }
+
+  //   const fetchResults = async () => {
+  //     try {
+  //       const querySnapshot = await getDocs(collection(db, "tasks"));
+  //       const data = querySnapshot.docs
+  //         .map((doc) => ({
+  //           id: doc.id,
+  //           ...doc.data(),
+  //         }))
+  //         .filter((task) =>
+  //           task.taskName.toLowerCase().includes(searchTerm.toLowerCase())
+  //         );
+
+  //       dispatch(setAccessData({ type: "taskGetDetails", response: data }));
+  //       // console.log(data);
+  //     } catch (error) {
+  //       console.error("Error searching tasks:", error);
+  //     }
+  //   };
+
+  //   const timeoutId = setTimeout(() => {
+  //     fetchResults();
+  //   }, 500);
+
+  //   return () => clearTimeout(timeoutId);
+  // }, [searchTerm]);
+
+  useEffect(() => {
+    if (searchTerm === "") {
+      getTaskData(dispatch)
+      return;
+    }
+
+    const fetchResults = async () => {
+      const q = query(
+        collection(db, "tasks"),
+        orderBy("taskName"),
+        startAt(searchTerm),
+        endAt(searchTerm + "\uf8ff") 
+      );
+
+      try {
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        dispatch(setAccessData({ type: "taskGetDetails", response: data }));
+      } catch (error) {
+        console.error("Error searching tasks:", error);
+      }
+    };
+    const timeoutId = setTimeout(() => {
+      fetchResults();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const fetchTasksByCategory = async (categoryId) => {
+    try {
+      let q = collection(db, "tasks");
+
+      if (categoryId) {
+        q = query(q, where("categoryId", "==", categoryId));
+      }
+
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      dispatch(setAccessData({ type: "taskGetDetails", response: data }));
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  useEffect(() => {
+    if(selectedCategoryId===""){
+      getTaskData(dispatch)
+    }
+    fetchTasksByCategory(selectedCategoryId);
+  }, [selectedCategoryId]);
 
   return (
     <>
@@ -33,8 +133,10 @@ const FilterCreateTasks = () => {
               <Select
                 labelId="demo-simple-select-label"
                 id="demo-simple-select"
-                value={age}
-                onChange={handleChange}
+                value={selectedCategoryId}
+                onChange={(event) => {
+                  dispatch(setAccessData({ type: "selectedCategory", response: event.target.value })) 
+                }}
                 size="small"
                 displayEmpty
                 sx={{
@@ -53,9 +155,8 @@ const FilterCreateTasks = () => {
                 <MenuItem value="" disabled>
                   Category
                 </MenuItem>
-                <MenuItem value={10}>Ten</MenuItem>
-                <MenuItem value={20}>Twenty</MenuItem>
-                <MenuItem value={30}>Thirty</MenuItem>
+                <MenuItem value="W">Work</MenuItem>
+                <MenuItem value="P">Personal</MenuItem>
               </Select>
             </FormControl>
             <FormControl sx={{ width: "auto" }}>
@@ -80,7 +181,7 @@ const FilterCreateTasks = () => {
                 }}
               >
                 <MenuItem value="" disabled>
-                  Due Date
+                  Status
                 </MenuItem>
                 <MenuItem value={10}>Ten</MenuItem>
                 <MenuItem value={20}>Twenty</MenuItem>
@@ -96,9 +197,10 @@ const FilterCreateTasks = () => {
             </div>
             <input
               type="search"
-              className="block p-2 ps-8 text-sm text-gray-900 border border-gray-300 rounded-2xl bg-gray-50 dark:border-gray-600 dark:text-white placeholder-gray-700"
+              className="block p-2 ps-8 text-sm text-gray-900 border border-gray-300 rounded-2xl bg-gray-50 dark:border-gray-600 placeholder-gray-700"
               placeholder="Search"
               required
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 

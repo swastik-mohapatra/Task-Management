@@ -4,6 +4,7 @@ interface SystemConfigState {
   taskDetails: Record<string, any>;
   taskGetDetails: any[];
   loading: boolean;
+  selectedCategory:string;
 }
 
 type SystemConfigKeys = keyof SystemConfigState;
@@ -19,6 +20,7 @@ export const systemConfigReducer = createSlice({
     taskDetails: {},
     taskGetDetails: [],
     loading: false,
+    selectedCategory:""
   } as SystemConfigState,
   
   reducers: {
@@ -30,7 +32,7 @@ export const systemConfigReducer = createSlice({
     },
     reorderTasks: (state, action: PayloadAction<any[]>) => {
       state.taskGetDetails = action.payload;
-    }
+    },
   },
 });
 
