@@ -34,7 +34,7 @@ const ListView = () => {
         <FilterCreateTasks />
         <div className="mt-6">
           <Divider />
-          <table className="w-full text-sm text-left rtl:text-right ">
+          <table className="w-full text-sm text-left rtl:text-right hidden sm:table">
             <colgroup>
               <col className="w-12" /> 
               <col className="w-8" /> 
@@ -85,7 +85,7 @@ const ListView = () => {
               <AccordionDetails
                 sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
               >
-                <Box>
+                <Box className="hidden sm:table">
                   <Button
                     variant="text"
                     startIcon={<FiPlus />}

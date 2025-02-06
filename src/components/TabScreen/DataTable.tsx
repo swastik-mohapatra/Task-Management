@@ -72,7 +72,7 @@ const DraggableRow = ({ row, children }) => {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-inherit border-b hover:bg-gray-50"
+      className="bg-inherit border-b border-[#0000001A] hover:bg-gray-50"
     >
       {children}
     </tr>
@@ -122,8 +122,6 @@ const DataTable = ({
   const getTaskDetails = useSelector(
     (state: any) => state?.systemConfigReducer?.taskGetDetails
   );
-
- 
 
   const taskCollectionRef = collection(db, "tasks");
 
@@ -207,7 +205,7 @@ const DataTable = ({
     <>
       <div className="relative overflow-x-auto ">
         {addTableRow && (
-          <table className="w-full text-sm text-left rtl:text-right ">
+          <table className="w-full text-sm text-left rtl:text-right hidden sm:table">
             <tbody>
               <>
                 <tr className=" bg-inherit dark:text-black">
@@ -419,7 +417,7 @@ const DataTable = ({
                       />
                     </div>
                   </td>
-                  <td className="w-4 p-4 cursor-move">::</td>
+                  <td className="w-4 p-4 cursor-move hidden sm:table-cell">::</td>
                   <th
                     scope="row"
                     className="px-6 py-4 font-medium whitespace-nowrap"
@@ -432,16 +430,16 @@ const DataTable = ({
                       {row.taskName}
                     </div>
                   </th>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 hidden sm:table-cell">
                     {row?.dueDate
                       ? dayjs(row?.dueDate)?.format("D MMM, YYYY")
                       : ""}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 hidden sm:table-cell">
                     <Chip label={row?.status} />
                   </td>
-                  <td className="px-6 py-4">{row?.category}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 hidden sm:table-cell">{row?.category}</td>
+                  <td className="px-6 py-4 hidden sm:table-cell">
                     <IconButton
                       aria-controls={
                         currentMenuId === row.id ? "menu" : undefined
@@ -512,10 +510,7 @@ const DataTable = ({
         )}
         {taskIdDetails.length > 0 && (
           <CheckDelUpModal
-            // openEdDelModal={true}
-            // setOpenEdDelModal={() => setSelectedRows([])}
-            // selectedRows={selectedRows}
-          />
+/>
         )}
       </div>
     </>

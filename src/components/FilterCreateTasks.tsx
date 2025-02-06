@@ -5,68 +5,32 @@ import {
   MenuItem,
   Select,
   SelectChangeEvent,
+  useMediaQuery,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
 import AddTaskModal from "./AddTaskModal";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setAccessData } from "../redux/reducers/systemConfigReducer";
 import { collection, endAt, getDocs, orderBy, query, startAt, where } from "firebase/firestore";
-import { db, auth, storage } from "../config/firebase"; 
+import { db } from "../config/firebase";
 import { getTaskData } from "../utils/taskGetService";
-import { useSelector } from "react-redux";
 
 const FilterCreateTasks = () => {
-  const [age, setAge] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [openAddModal, setOpenAddModal] = useState(false);
   const [addText, setAddText] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
 
   const selectedCategoryId = useSelector(
-    (state)=>state?.systemConfigReducer?.selectedCategory
-  )
-
-  const handleChange = (event: SelectChangeEvent) => {
-    setAge(event.target.value as string);
-  };
-
-  // useEffect(() => {
-  //   if (searchTerm === "") {
-  //     getTaskData(dispatch);
-  //     return;
-  //   }
-
-  //   const fetchResults = async () => {
-  //     try {
-  //       const querySnapshot = await getDocs(collection(db, "tasks"));
-  //       const data = querySnapshot.docs
-  //         .map((doc) => ({
-  //           id: doc.id,
-  //           ...doc.data(),
-  //         }))
-  //         .filter((task) =>
-  //           task.taskName.toLowerCase().includes(searchTerm.toLowerCase())
-  //         );
-
-  //       dispatch(setAccessData({ type: "taskGetDetails", response: data }));
-  //       // console.log(data);
-  //     } catch (error) {
-  //       console.error("Error searching tasks:", error);
-  //     }
-  //   };
-
-  //   const timeoutId = setTimeout(() => {
-  //     fetchResults();
-  //   }, 500);
-
-  //   return () => clearTimeout(timeoutId);
-  // }, [searchTerm]);
+    (state) => state?.systemConfigReducer?.selectedCategory
+  );
 
   useEffect(() => {
     if (searchTerm === "") {
-      getTaskData(dispatch)
+      getTaskData(dispatch);
       return;
     }
 
@@ -75,7 +39,7 @@ const FilterCreateTasks = () => {
         collection(db, "tasks"),
         orderBy("taskName"),
         startAt(searchTerm),
-        endAt(searchTerm + "\uf8ff") 
+        endAt(searchTerm + "\uf8ff")
       );
 
       try {
@@ -89,10 +53,8 @@ const FilterCreateTasks = () => {
         console.error("Error searching tasks:", error);
       }
     };
-    const timeoutId = setTimeout(() => {
-      fetchResults();
-    }, 500);
 
+    const timeoutId = setTimeout(fetchResults, 500);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
@@ -117,31 +79,29 @@ const FilterCreateTasks = () => {
   };
 
   useEffect(() => {
-    if(selectedCategoryId===""){
-      getTaskData(dispatch)
+    if (selectedCategoryId === "") {
+      getTaskData(dispatch);
     }
     fetchTasksByCategory(selectedCategoryId);
   }, [selectedCategoryId]);
 
   return (
     <>
-      <div className="flex justify-between items-center">
-        <div className="flex gap-4">
-          <div>Filter By: </div>
-          <Box className="flex gap-2">
+      <div className={`flex ${isSmallScreen ? "flex-col gap-3" : "justify-between items-center"}`}>
+        {/* Filter Section */}
+        <div className={`flex ${isSmallScreen ? "flex-col gap-2" : "gap-4"}`}>
+          <div>Filter By:</div>
+          <Box className={`flex ${isSmallScreen ? "flex-col gap-2" : "gap-2"}`}>
             <FormControl sx={{ width: "auto" }}>
               <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
                 value={selectedCategoryId}
-                onChange={(event) => {
-                  dispatch(setAccessData({ type: "selectedCategory", response: event.target.value })) 
-                }}
+                onChange={(event) =>
+                  dispatch(setAccessData({ type: "selectedCategory", response: event.target.value }))
+                }
                 size="small"
                 displayEmpty
                 sx={{
                   borderRadius: "16px",
-                  paddingX: "8px",
                   minWidth: "80px",
                   fontSize: "14px",
                   height: "28px",
@@ -159,38 +119,11 @@ const FilterCreateTasks = () => {
                 <MenuItem value="P">Personal</MenuItem>
               </Select>
             </FormControl>
-            {/* <FormControl sx={{ width: "auto" }}>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={age}
-                onChange={handleChange}
-                size="small"
-                displayEmpty
-                sx={{
-                  borderRadius: "16px",
-                  paddingX: "8px",
-                  minWidth: "80px",
-                  fontSize: "14px",
-                  height: "28px",
-                  "& .MuiSelect-select": {
-                    display: "flex",
-                    alignItems: "center",
-                    paddingY: "4px",
-                  },
-                }}
-              >
-                <MenuItem value="" disabled>
-                  Status
-                </MenuItem>
-                <MenuItem value={10}>Ten</MenuItem>
-                <MenuItem value={20}>Twenty</MenuItem>
-                <MenuItem value={30}>Thirty</MenuItem>
-              </Select>
-            </FormControl> */}
           </Box>
         </div>
-        <div className="flex gap-4">
+
+        {/* Search & Add Task Section */}
+        <div className={`flex ${isSmallScreen ? "flex-col gap-3" : "gap-4"}`}>
           <div className="relative">
             <div className="absolute inset-y-0 start-0 flex items-center ps-2 pointer-events-none">
               <CiSearch />
@@ -213,16 +146,18 @@ const FilterCreateTasks = () => {
             }}
             onClick={() => {
               setAddText(!addText);
-              dispatch(setAccessData({type: 'taskDetails', response: {}}))
+              dispatch(setAccessData({ type: "taskDetails", response: {} }));
               setOpenAddModal(!openAddModal);
             }}
           >
             ADD TASKS
           </Button>
         </div>
+
+        {/* Add Task Modal */}
         {openAddModal && (
           <AddTaskModal
-          addText={addText}
+            addText={addText}
             openAddModal={openAddModal}
             setOpenAddModal={setOpenAddModal}
           />

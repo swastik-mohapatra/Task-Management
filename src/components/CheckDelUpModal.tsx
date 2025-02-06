@@ -7,20 +7,14 @@ import { db } from "../config/firebase";
 import { getTaskData } from "../utils/taskGetService";
 import { useState } from "react";
 
-// interface AddTaskModalProps {
-// }
-
 const statusOptions = [
   { key: "T", label: "TODO" },
   { key: "P", label: "In Progress" },
   { key: "C", label: "Completed" },
 ];
 
-const CheckDelUpModal = () =>
-  // {}: AddTaskModalProps
-  {
+const CheckDelUpModal = () =>{
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [currentMenuId, setCurrentMenuId] = useState<string | null>(null);
 
     const taskIdDetails = useSelector(
       (state: any) => state?.systemConfigReducer?.taskIdDetails
