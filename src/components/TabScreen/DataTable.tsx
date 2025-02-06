@@ -41,8 +41,12 @@ import { db } from "../../config/firebase";
 import { getTaskData } from "../../utils/taskGetService";
 import { useDispatch } from "react-redux";
 import AddTaskModal from "../AddTaskModal";
-import { reorderTasks, setAccessData } from "../../redux/reducers/systemConfigReducer";
+import {
+  reorderTasks,
+  setAccessData,
+} from "../../redux/reducers/systemConfigReducer";
 import { useSelector } from "react-redux";
+import CheckDelUpModal from "../CheckDelUpModal";
 
 interface DataTableProps {
   rows: TableRow[];
@@ -87,6 +91,30 @@ const DataTable = ({
   const [currentMenuId, setCurrentMenuId] = useState<string | null>(null);
   const [openAddModal, setOpenAddModal] = useState(false);
 
+  const taskIdDetails = useSelector(
+    (state: any) => state?.systemConfigReducer?.taskIdDetails
+  );
+
+   const dispatch = useDispatch();
+
+  const handleCheckboxChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    rowId: string
+  ) => {
+    event.stopPropagation(); // Prevent event bubbling
+  
+    const updatedSelectedRows = event.target.checked
+      ? [...(taskIdDetails || []), rowId]
+      : (taskIdDetails || []).filter((id: string) => id !== rowId);
+     
+    dispatch(
+      setAccessData({ 
+        type: "taskIdDetails", 
+        response: updatedSelectedRows 
+      })
+    );
+  };
+
   const taskDetail = useSelector(
     (state: any) => state?.systemConfigReducer?.taskDetails
   );
@@ -95,7 +123,7 @@ const DataTable = ({
     (state: any) => state?.systemConfigReducer?.taskGetDetails
   );
 
-  const dispatch = useDispatch();
+ 
 
   const taskCollectionRef = collection(db, "tasks");
 
@@ -107,7 +135,7 @@ const DataTable = ({
     setAnchorEl(event.currentTarget);
     setCurrentMenuId(menuId);
   };
-  
+
   const handleCloseMenu = (event?: React.MouseEvent) => {
     if (event) {
       event.stopPropagation(); // Prevent event bubbling
@@ -146,15 +174,19 @@ const DataTable = ({
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    
+
     if (active.id !== over?.id) {
       const reorderedTasks = [...getTaskDetails];
-      const draggedIndex = reorderedTasks.findIndex(task => task.id === active.id);
-      const targetIndex = reorderedTasks.findIndex(task => task.id === over?.id);
-      
+      const draggedIndex = reorderedTasks.findIndex(
+        (task) => task.id === active.id
+      );
+      const targetIndex = reorderedTasks.findIndex(
+        (task) => task.id === over?.id
+      );
+
       const [removed] = reorderedTasks.splice(draggedIndex, 1);
       reorderedTasks.splice(targetIndex, 0, removed);
-      
+
       dispatch(reorderTasks(reorderedTasks));
     }
   };
@@ -247,7 +279,7 @@ const DataTable = ({
                         <MenuItem
                           key={status}
                           onClick={(event) => {
-                            event.stopPropagation(); 
+                            event.stopPropagation();
                             dispatch(
                               setAccessData({
                                 type: "taskDetails",
@@ -302,7 +334,7 @@ const DataTable = ({
                         <MenuItem
                           key={status}
                           onClick={(event) => {
-                            event.stopPropagation(); 
+                            event.stopPropagation();
                             dispatch(
                               setAccessData({
                                 type: "taskDetails",
@@ -360,120 +392,129 @@ const DataTable = ({
             items={rows.map((row) => row.id)}
             strategy={verticalListSortingStrategy}
           > */}
-            <div className="relative overflow-auto max-h-96">
-              <table className="w-full text-xs text-left">
-                <colgroup>
-                  <col className="w-12" />
-                  <col className="w-8" />
-                  <col className="w-1/4" />
-                  <col className="w-1/5" />
-                  <col className="w-1/6" />
-                  <col className="w-1/6" />
-                  <col className="w-12" />
-                </colgroup>
-                <tbody>
-                  {rows.map((row) => (
-                    <DraggableRow key={row?.id} row={row}>
-                      <td className="w-4 p-4">
-                        <div className="flex items-center">
-                          <input
-                            id={`checkbox-table-search-${row?.id}`}
-                            type="checkbox"
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                          />
-                        </div>
-                      </td>
-                      <td className="w-4 p-4 cursor-move">::</td>
-                      <th
-                        scope="row"
-                        className="px-6 py-4 font-medium whitespace-nowrap"
+        <div className="relative overflow-auto max-h-96">
+          <table className="w-full text-xs text-left">
+            <colgroup>
+              <col className="w-12" />
+              <col className="w-8" />
+              <col className="w-1/4" />
+              <col className="w-1/5" />
+              <col className="w-1/6" />
+              <col className="w-1/6" />
+              <col className="w-12" />
+            </colgroup>
+            <tbody>
+              {rows.map((row) => (
+                <DraggableRow key={row?.id} row={row}>
+                  <td className="w-4 p-4">
+                    <div className="flex items-center">
+                      <input
+                        id={`checkbox-table-search-${row?.id}`}
+                        type="checkbox"
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        onChange={(event) => {
+                          handleCheckboxChange(event, row?.id);
+                        }}
+                        checked={taskIdDetails?.includes(row?.id)}
+                      />
+                    </div>
+                  </td>
+                  <td className="w-4 p-4 cursor-move">::</td>
+                  <th
+                    scope="row"
+                    className="px-6 py-4 font-medium whitespace-nowrap"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FaCircleCheck
+                        size={20}
+                        color={row.status === "Completed" ? "Green" : "Black"}
+                      />
+                      {row.taskName}
+                    </div>
+                  </th>
+                  <td className="px-6 py-4">
+                    {row?.dueDate
+                      ? dayjs(row?.dueDate)?.format("D MMM, YYYY")
+                      : ""}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Chip label={row?.status} />
+                  </td>
+                  <td className="px-6 py-4">{row?.category}</td>
+                  <td className="px-6 py-4">
+                    <IconButton
+                      aria-controls={
+                        currentMenuId === row.id ? "menu" : undefined
+                      }
+                      aria-haspopup="true"
+                      onClick={(event) => handleClickMenu(event, row?.id)}
+                    >
+                      <IoIosMore />
+                    </IconButton>
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={currentMenuId === row?.id}
+                      onClick={(e) => e.stopPropagation()}
+                      onClose={handleCloseMenu}
+                      sx={{
+                        "& .MuiPaper-root": {
+                          backgroundColor: "#FFF9F9",
+                          borderColor: "#7B198426",
+                        },
+                      }}
+                    >
+                      <MenuItem
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          dispatch(
+                            setAccessData({
+                              type: "taskDetails",
+                              response: {
+                                ...row,
+                                status: row?.statusId,
+                                category: row?.categoryId,
+                              },
+                            })
+                          );
+                          setAnchorEl(null);
+                          setCurrentMenuId(null);
+                          setOpenAddModal(!openAddModal);
+                        }}
                       >
-                        <div className="flex items-center gap-2">
-                          <FaCircleCheck
-                            size={20}
-                            color={
-                              row.status === "Completed" ? "Green" : "Black"
-                            }
-                          />
-                          {row.taskName}
-                        </div>
-                      </th>
-                      <td className="px-6 py-4">
-                        {row?.dueDate
-                          ? dayjs(row?.dueDate)?.format("D MMM, YYYY")
-                          : ""}
-                      </td>
-                      <td className="px-6 py-4">
-                        <Chip label={row?.status} />
-                      </td>
-                      <td className="px-6 py-4">{row?.category}</td>
-                      <td className="px-6 py-4">
-                        <IconButton
-                          aria-controls={
-                            currentMenuId === row.id ? "menu" : undefined
-                          }
-                          aria-haspopup="true"
-                          onClick={(event) => handleClickMenu(event, row?.id)}
-                        >
-                          <IoIosMore />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={currentMenuId === row?.id}
-                          onClick={(e) => e.stopPropagation()} 
-                          onClose={handleCloseMenu}
-                          sx={{
-                            "& .MuiPaper-root": {
-                              backgroundColor: "#FFF9F9",
-                              borderColor: "#7B198426",
-                            },
-                          }}
-                        >
-                          <MenuItem
-                            onClick={(event) => {
-                              event.stopPropagation(); 
-                              dispatch(
-                                setAccessData({
-                                  type: "taskDetails",
-                                  response: {
-                                    ...row,
-                                    status: row?.statusId,
-                                    category: row?.categoryId,
-                                  },
-                                })
-                              );
-                              setAnchorEl(null);
-                              setCurrentMenuId(null);
-                              setOpenAddModal(!openAddModal);
-                            }}
-                          >
-                            <ListItemIcon>
-                              <FiEdit3 />
-                            </ListItemIcon>
-                            Edit
-                          </MenuItem>
-                          <MenuItem
-                            sx={{ color: "red" }}
-                            onClick={() => deleteTask(row?.id)}
-                          >
-                            <ListItemIcon>
-                              <MdDelete color="red" />
-                            </ListItemIcon>
-                            Delete
-                          </MenuItem>
-                        </Menu>
-                      </td>
-                    </DraggableRow>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          {/* </SortableContext>
+                        <ListItemIcon>
+                          <FiEdit3 />
+                        </ListItemIcon>
+                        Edit
+                      </MenuItem>
+                      <MenuItem
+                        sx={{ color: "red" }}
+                        onClick={() => deleteTask(row?.id)}
+                      >
+                        <ListItemIcon>
+                          <MdDelete color="red" />
+                        </ListItemIcon>
+                        Delete
+                      </MenuItem>
+                    </Menu>
+                  </td>
+                </DraggableRow>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* </SortableContext>
         </DndContext> */}
         {openAddModal && (
           <AddTaskModal
             openAddModal={openAddModal}
             setOpenAddModal={setOpenAddModal}
+          />
+        )}
+        {taskIdDetails.length > 0 && (
+          <CheckDelUpModal
+            // openEdDelModal={true}
+            // setOpenEdDelModal={() => setSelectedRows([])}
+            // selectedRows={selectedRows}
           />
         )}
       </div>

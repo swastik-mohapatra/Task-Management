@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface SystemConfigState {
   taskDetails: Record<string, any>;
   taskGetDetails: any[];
+  taskIdDetails:any[];
   loading: boolean;
   selectedCategory:string;
 }
@@ -19,6 +20,7 @@ export const systemConfigReducer = createSlice({
   initialState: {
     taskDetails: {},
     taskGetDetails: [],
+    taskIdDetails:[],
     loading: false,
     selectedCategory:""
   } as SystemConfigState,

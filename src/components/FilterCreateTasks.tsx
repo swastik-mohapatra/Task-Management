@@ -159,7 +159,7 @@ const FilterCreateTasks = () => {
                 <MenuItem value="P">Personal</MenuItem>
               </Select>
             </FormControl>
-            <FormControl sx={{ width: "auto" }}>
+            {/* <FormControl sx={{ width: "auto" }}>
               <Select
                 labelId="demo-simple-select-label"
                 id="demo-simple-select"
@@ -187,7 +187,7 @@ const FilterCreateTasks = () => {
                 <MenuItem value={20}>Twenty</MenuItem>
                 <MenuItem value={30}>Thirty</MenuItem>
               </Select>
-            </FormControl>
+            </FormControl> */}
           </Box>
         </div>
         <div className="flex gap-4">
