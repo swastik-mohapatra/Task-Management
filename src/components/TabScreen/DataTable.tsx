@@ -439,7 +439,7 @@ const DataTable = ({
                     <Chip label={row?.status} />
                   </td>
                   <td className="px-6 py-4 hidden sm:table-cell">{row?.category}</td>
-                  <td className="px-6 py-4 hidden sm:table-cell">
+                  <td className="px-6 py-4">
                     <IconButton
                       aria-controls={
                         currentMenuId === row.id ? "menu" : undefined

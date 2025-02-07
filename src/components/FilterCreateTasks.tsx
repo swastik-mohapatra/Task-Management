@@ -12,7 +12,15 @@ import { CiSearch } from "react-icons/ci";
 import AddTaskModal from "./AddTaskModal";
 import { useDispatch, useSelector } from "react-redux";
 import { setAccessData } from "../redux/reducers/systemConfigReducer";
-import { collection, endAt, getDocs, orderBy, query, startAt, where } from "firebase/firestore";
+import {
+  collection,
+  endAt,
+  getDocs,
+  orderBy,
+  query,
+  startAt,
+  where,
+} from "firebase/firestore";
 import { db } from "../config/firebase";
 import { getTaskData } from "../utils/taskGetService";
 
@@ -87,8 +95,11 @@ const FilterCreateTasks = () => {
 
   return (
     <>
-      <div className={`flex ${isSmallScreen ? "flex-col gap-3" : "justify-between items-center"}`}>
-        {/* Filter Section */}
+      <div
+        className={`flex ${
+          isSmallScreen ? "flex-col gap-3" : "justify-between items-center"
+        }`}
+      >
         <div className={`flex ${isSmallScreen ? "flex-col gap-2" : "gap-4"}`}>
           <div>Filter By:</div>
           <Box className={`flex ${isSmallScreen ? "flex-col gap-2" : "gap-2"}`}>
@@ -96,7 +107,12 @@ const FilterCreateTasks = () => {
               <Select
                 value={selectedCategoryId}
                 onChange={(event) =>
-                  dispatch(setAccessData({ type: "selectedCategory", response: event.target.value }))
+                  dispatch(
+                    setAccessData({
+                      type: "selectedCategory",
+                      response: event.target.value,
+                    })
+                  )
                 }
                 size="small"
                 displayEmpty
@@ -122,18 +138,19 @@ const FilterCreateTasks = () => {
           </Box>
         </div>
 
-        {/* Search & Add Task Section */}
-        <div className={`flex ${isSmallScreen ? "flex-col gap-3" : "gap-4"}`}>
-          <div className="relative">
+        <div className={`flex ${isSmallScreen ? "flex-col gap-3" : "gap-4"} `}>
+          <div className="relative ">
             <div className="absolute inset-y-0 start-0 flex items-center ps-2 pointer-events-none">
               <CiSearch />
             </div>
             <input
               type="search"
-              className="block p-2 ps-8 text-sm text-gray-900 border border-gray-300 rounded-2xl bg-gray-50 dark:border-gray-600 placeholder-gray-700"
-              placeholder="Search"
+              className={`block p-2 ps-8 text-sm text-gray-900 border border-gray-300 rounded-2xl bg-gray-50 dark:border-gray-600 placeholder-gray-700 ${
+                isSmallScreen ? "w-full" : "w-auto"
+              }`}
+              placeholder="Search Task name"
               required
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e?.target?.value)}
             />
           </div>
 

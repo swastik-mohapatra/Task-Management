@@ -13,10 +13,8 @@ const BoradView = () => {
   );
 
   const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
-  const inProgressTasks = getTaskDetails.filter(
-    (row) => row.statusId === "P"
-  );
-  const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");;
+  const inProgressTasks = getTaskDetails.filter((row) => row.statusId === "P");
+  const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
 
   return (
     <>
@@ -38,7 +36,8 @@ const BoradView = () => {
                 padding: "5px",
                 borderRadius: "5px",
                 fontSize: "13px",
-                marginBottom:"1.4rem"
+                marginBottom: "1.4rem",
+                fontWeight: "bold",
               }}
               component="div"
             >
@@ -46,7 +45,7 @@ const BoradView = () => {
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               {todoTasks.length > 0 ? (
-                <ListCard rows={todoTasks} setBoardCards={setBoardCards}/>
+                <ListCard rows={todoTasks} setBoardCards={setBoardCards} />
               ) : (
                 "No Tasks to display"
               )}
@@ -63,14 +62,14 @@ const BoradView = () => {
           <CardContent sx={{}}>
             <Typography
               gutterBottom
-         
               sx={{
                 backgroundColor: "#85D9F1",
                 width: "fit-content",
                 padding: "4px",
                 borderRadius: "5px",
                 fontSize: "13px",
-                marginBottom:"1.4rem"
+                marginBottom: "1.4rem",
+                fontWeight: "bold",
               }}
               component="div"
             >
@@ -78,7 +77,10 @@ const BoradView = () => {
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               {inProgressTasks.length > 0 ? (
-                <ListCard rows={inProgressTasks} setBoardCards={setBoardCards}/>
+                <ListCard
+                  rows={inProgressTasks}
+                  setBoardCards={setBoardCards}
+                />
               ) : (
                 "No Tasks to display"
               )}
@@ -101,7 +103,8 @@ const BoradView = () => {
                 padding: "4px",
                 borderRadius: "5px",
                 fontSize: "13px",
-                marginBottom:"1.4rem"
+                marginBottom: "1.4rem",
+                fontWeight: "bold",
               }}
               component="div"
             >
@@ -109,7 +112,7 @@ const BoradView = () => {
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               {completedTasks.length > 0 ? (
-                <ListCard rows={completedTasks} setBoardCards={setBoardCards}/>
+                <ListCard rows={completedTasks} setBoardCards={setBoardCards} />
               ) : (
                 "No Tasks to display"
               )}

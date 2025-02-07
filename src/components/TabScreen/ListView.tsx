@@ -85,7 +85,7 @@ const ListView = () => {
               <AccordionDetails
                 sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
               >
-                <Box className="hidden sm:table">
+                <Box className="hidden sm:block">
                   <Button
                     variant="text"
                     startIcon={<FiPlus />}
