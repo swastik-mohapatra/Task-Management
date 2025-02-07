@@ -35,6 +35,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setAccessData } from "../redux/reducers/systemConfigReducer";
 import dayjs from "dayjs";
 import { getTaskData } from "../utils/taskGetService";
+// import { v2 as cloudinary } from "cloudinary";
 
 interface AddTaskModalProps {
   addText: boolean;
@@ -133,16 +134,41 @@ const AddTaskModal = ({
       return;
     }
 
+    const cloudinaryUrl =
+      "https://api.cloudinary.com/v1_1/dzhm9jir2/image/upload";
+
     const fileUploadPromises = selectedFiles.map(async (file) => {
-      const fileRef = ref(
-        storage,
-        `tasks/${auth.currentUser.uid}/${file.name}`
-      );
-      await uploadBytes(fileRef, file);
-      return await getDownloadURL(fileRef);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "Task_Management");
+
+        const response = await fetch(cloudinaryUrl, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload file to Cloudinary");
+        }
+
+        const result = await response.json();
+        console.log("Cloudinary upload response:", result);
+
+        return {
+          name: file.name,
+          url: result.secure_url,
+          type: file.type
+        };
+      } catch (err) {
+        console.error("Error uploading file to Cloudinary: ", err);
+        return null;
+      }
     });
 
     try {
+      const fileData = await Promise.all(fileUploadPromises);
+
       const formattedTaskDetail = {
         taskName: taskDetail?.taskName || "",
         description: taskDetail?.description || "",
@@ -159,10 +185,12 @@ const AddTaskModal = ({
             : "Completed",
         statusId: taskDetail?.status || "",
         userId: auth?.currentUser?.uid,
+        files: fileData.filter((file) => file !== null),
       };
 
       const taskRef = await addDoc(taskCollectionRef, formattedTaskDetail);
       await addLogActivity(taskRef.id, "Task Created");
+
       getTaskData(dispatch);
       dispatch(setAccessData({ type: "taskDetails", response: {} }));
       setSelectedFiles([]);
@@ -171,7 +199,7 @@ const AddTaskModal = ({
       console.error("Error adding document: ", err);
     }
   };
-
+  
   const updateTask = async (id: string) => {
     const updatePayload = {
       taskName: taskDetail?.taskName || "",
@@ -189,6 +217,7 @@ const AddTaskModal = ({
           : "Completed",
       statusId: taskDetail?.status || "",
       userId: auth?.currentUser?.uid,
+      files: taskDetail?.files || [],
     };
 
     const taskUpdateDoc = doc(db, "tasks", id);
@@ -239,14 +268,14 @@ const AddTaskModal = ({
 
   return (
     <div className="fixed top-0 left-0 w-full h-full bg-black/75 flex justify-center items-center z-[1000] overflow-y-auto">
-       <div
+      <div
         className={`top-24 sm:top-0 relative bg-[#FFFFFF] sm:rounded-lg shadow w-full ${
           addText ? "md:w-xl" : "md:w-5xl"
         } sm:mt-10 flex flex-col rounded-t-3xl h-full sm:h-auto`}
-        style={{ 
-          maxHeight: '80vh', 
-          display: 'flex', 
-          flexDirection: 'column' 
+        style={{
+          maxHeight: "80vh",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <div className="flex items-center justify-center sm:justify-between p-2 sm:border-b sm:border-[#0000001A] rounded-t">
@@ -287,12 +316,12 @@ const AddTaskModal = ({
             </div>
           )}
         </div>
-        <div 
+        <div
           className="flex flex-col sm:flex-row gap-4 flex-grow overflow-y-auto"
-          style={{ 
-            flex: '1 1 auto', 
-            overflowY: 'auto',
-            maxHeight: 'calc(100% - 120px)' 
+          style={{
+            flex: "1 1 auto",
+            overflowY: "auto",
+            maxHeight: "calc(100% - 120px)",
           }}
         >
           <div
@@ -412,9 +441,35 @@ const AddTaskModal = ({
                 />
               </Button>
 
-              {selectedFiles.length > 0 && (
+              {taskDetail?.files?.length > 0 && (
                 <div className="mt-2 text-xs text-gray-700">
                   <strong>Uploaded Files:</strong>
+                  <ul className="list-disc pl-4">
+                    {taskDetail.files.map((file, index) => (
+                      <li key={index} className="flex items-center gap-2">
+                        {file.url.startsWith("http") && (
+                          <img
+                            src={file.url}
+                            alt="preview"
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                        )}
+                        <span>{file.name}</span>
+                        <button
+                          className="text-red-500 hover:underline ml-2"
+                          onClick={() => handleRemoveFile(index)}
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {selectedFiles.length > 0 && (
+                <div className="mt-2 text-xs text-gray-700">
+                  <strong>New Files:</strong>
                   <ul className="list-disc pl-4">
                     {selectedFiles.map((file, index) => (
                       <li key={index} className="flex items-center gap-2">
@@ -440,7 +495,6 @@ const AddTaskModal = ({
             </div>
           </div>
 
-          {/* Show Activity by default on larger screens */}
           <div
             className={`${
               selectedOption === "activity" ? "block" : "hidden sm:block"
@@ -475,13 +529,13 @@ const AddTaskModal = ({
             )}
           </div>
         </div>
-        <div 
+        <div
           className="flex justify-end gap-2 p-2 border-t border-gray-200 bg-[#F1F1F1] rounded-b sticky bottom-0"
-          style={{ 
+          style={{
             flexShrink: 0,
-            position: 'sticky',
+            position: "sticky",
             bottom: 0,
-            zIndex: 10 
+            zIndex: 10,
           }}
         >
           <button
