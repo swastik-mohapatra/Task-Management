@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
+  ButtonGroup,
   Divider,
   FormControl,
   FormControlLabel,
@@ -58,18 +59,6 @@ const AddTaskModal = ({
     (state: any) => state?.systemConfigReducer?.taskDetails
   );
   const dispatch = useDispatch();
-
-  const VisuallyHiddenInput = styled("input")({
-    clip: "rect(0 0 0 0)",
-    clipPath: "inset(50%)",
-    height: 1,
-    overflow: "hidden",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    whiteSpace: "nowrap",
-    width: 1,
-  });
 
   const taskCollectionRef = collection(db, "tasks");
 
@@ -249,16 +238,21 @@ const AddTaskModal = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 w-full h-full bg-black/75 flex justify-center items-center z-[1000]">
-      <div
-        className={`relative bg-[#FFFFFF] sm:rounded-lg shadow w-xl ${
+    <div className="fixed top-0 left-0 w-full h-full bg-black/75 flex justify-center items-center z-[1000] overflow-y-auto">
+       <div
+        className={`top-24 sm:top-0 relative bg-[#FFFFFF] sm:rounded-lg shadow w-full ${
           addText ? "md:w-xl" : "md:w-5xl"
-        } mt-0 sm:mt-10 flex flex-col rounded-t-3xl`}
+        } sm:mt-10 flex flex-col rounded-t-3xl h-full sm:h-auto`}
+        style={{ 
+          maxHeight: '80vh', 
+          display: 'flex', 
+          flexDirection: 'column' 
+        }}
       >
-        <div className="flex items-center justify-left sm:justify-between p-2 sm:border-b sm:border-[#0000001A] rounded-t">
+        <div className="flex items-center justify-center sm:justify-between p-2 sm:border-b sm:border-[#0000001A] rounded-t">
           <h3
             className={`text-xl font-semibold text-gray-900 ${
-              addText ? "sm:block":"sm:block hidden"
+              addText ? "sm:block" : "sm:block hidden"
             }`}
           >
             {addText ? "Create Task" : "Update Task"}
@@ -271,33 +265,36 @@ const AddTaskModal = ({
             ✖
           </button>
           {!addText && (
-            <div className="sm:hidden block">
-              <FormControl>
-                <RadioGroup
-                  row
-                  aria-labelledby="demo-row-radio-buttons-group-label"
-                  name="row-radio-buttons-group"
-                  onChange={(e) => {
-                    setSelectedOption(e?.target.value);
-                    console.log(e?.target?.value);
-                  }}
+            <div className="sm:hidden block ">
+              <ButtonGroup>
+                <Button
+                  variant={
+                    selectedOption === "details" ? "contained" : "outlined"
+                  }
+                  onClick={() => setSelectedOption("details")}
                 >
-                  <FormControlLabel
-                    value="details"
-                    control={<Radio />}
-                    label="Details"
-                  />
-                  <FormControlLabel
-                    value="activity"
-                    control={<Radio />}
-                    label="Activity"
-                  />
-                </RadioGroup>
-              </FormControl>
+                  Details
+                </Button>
+                <Button
+                  variant={
+                    selectedOption === "activity" ? "contained" : "outlined"
+                  }
+                  onClick={() => setSelectedOption("activity")}
+                >
+                  Activity
+                </Button>
+              </ButtonGroup>
             </div>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div 
+          className="flex flex-col sm:flex-row gap-4 flex-grow overflow-y-auto"
+          style={{ 
+            flex: '1 1 auto', 
+            overflowY: 'auto',
+            maxHeight: 'calc(100% - 120px)' 
+          }}
+        >
           <div
             className={`${
               selectedOption === "details" ? "block" : "hidden sm:block"
@@ -478,7 +475,15 @@ const AddTaskModal = ({
             )}
           </div>
         </div>
-        <div className="flex justify-end gap-2 p-2 border-t border-gray-200 bg-[#F1F1F1] rounded-b">
+        <div 
+          className="flex justify-end gap-2 p-2 border-t border-gray-200 bg-[#F1F1F1] rounded-b sticky bottom-0"
+          style={{ 
+            flexShrink: 0,
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10 
+          }}
+        >
           <button
             type="button"
             className="text-black border border-[#00000030] duration-500 hover:bg-white hover:text-[#7B1984] focus:ring-4 focus:outline-none hover:border-[#7B1984] font-medium rounded-2xl text-xs px-3 py-1"

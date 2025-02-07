@@ -164,6 +164,7 @@ const FilterCreateTasks = () => {
             onClick={() => {
               setAddText(!addText);
               dispatch(setAccessData({ type: "taskDetails", response: {} }));
+              setAddText(true)
               setOpenAddModal(!openAddModal);
             }}
           >
