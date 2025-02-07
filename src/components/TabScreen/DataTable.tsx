@@ -1,4 +1,4 @@
-import { MouseEvent, useState } from "react";
+import { Children, MouseEvent, useState } from "react";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import {
@@ -58,27 +58,44 @@ interface DataTableProps {
 }
 
 const DraggableRow = ({ row, children }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: row.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: row.id });
+
+  const DragHandle = () => (
+    <td className="w-4 p-4 cursor-move hidden sm:table-cell" {...listeners} {...attributes}>
+      ::
+    </td>
+  );
+
+  const wrappedChildren = Children.map(children, (child, index) => {
+    if (index === 1) {
+      return <DragHandle />;
+    }
+    return child;
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
     <tr
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className="bg-inherit border-b border-[#0000001A] hover:bg-gray-50"
     >
-      {children}
+      {wrappedChildren}
     </tr>
   );
 };
-
 const DataTable = ({
   rows,
   addTableRow,
@@ -101,7 +118,7 @@ const DataTable = ({
     event: React.ChangeEvent<HTMLInputElement>,
     rowId: string
   ) => {
-    event.stopPropagation(); // Prevent event bubbling
+    event.stopPropagation();
   
     const updatedSelectedRows = event.target.checked
       ? [...(taskIdDetails || []), rowId]
@@ -129,14 +146,14 @@ const DataTable = ({
     event: React.MouseEvent<HTMLButtonElement>,
     menuId: string
   ) => {
-    event.stopPropagation(); // Stop event from bubbling
+    event.stopPropagation(); 
     setAnchorEl(event.currentTarget);
     setCurrentMenuId(menuId);
   };
 
   const handleCloseMenu = (event?: React.MouseEvent) => {
     if (event) {
-      event.stopPropagation(); // Prevent event bubbling
+      event.stopPropagation(); 
     }
     setAnchorEl(null);
     setCurrentMenuId(null);
@@ -172,19 +189,12 @@ const DataTable = ({
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-
+    
     if (active.id !== over?.id) {
-      const reorderedTasks = [...getTaskDetails];
-      const draggedIndex = reorderedTasks.findIndex(
-        (task) => task.id === active.id
-      );
-      const targetIndex = reorderedTasks.findIndex(
-        (task) => task.id === over?.id
-      );
-
-      const [removed] = reorderedTasks.splice(draggedIndex, 1);
-      reorderedTasks.splice(targetIndex, 0, removed);
-
+      const oldIndex = getTaskDetails.findIndex(task => task.id === active.id);
+      const newIndex = getTaskDetails.findIndex(task => task.id === over?.id);
+      
+      const reorderedTasks = arrayMove(getTaskDetails, oldIndex, newIndex);
       dispatch(reorderTasks(reorderedTasks));
     }
   };
@@ -381,7 +391,7 @@ const DataTable = ({
           </table>
         )}
 
-        {/* <DndContext
+        <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
@@ -389,7 +399,7 @@ const DataTable = ({
           <SortableContext
             items={rows.map((row) => row.id)}
             strategy={verticalListSortingStrategy}
-          > */}
+          >
         <div className="relative overflow-auto max-h-96">
           <table className="w-full text-xs text-left">
             <colgroup>
@@ -500,8 +510,8 @@ const DataTable = ({
             </tbody>
           </table>
         </div>
-        {/* </SortableContext>
-        </DndContext> */}
+        </SortableContext>
+        </DndContext>
         {openAddModal && (
           <AddTaskModal
             openAddModal={openAddModal}
