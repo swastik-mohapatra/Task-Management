@@ -140,7 +140,11 @@ const ListCard = ({ card }: ListCardProps) => {
               {card?.category}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {card?.dueDate ? dayjs(card?.dueDate).format("D MMM, YYYY") : ""}
+              {card?.dueDate
+                ? dayjs(card?.dueDate).isSame(dayjs(), "day")
+                  ? "Today"
+                  : dayjs(card?.dueDate).format("D MMM, YYYY")
+                : ""}
             </Typography>
           </Box>
         </CardContent>
