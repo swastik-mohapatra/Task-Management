@@ -11,10 +11,18 @@ import {
 } from "@mui/material";
 import { FiPlus } from "react-icons/fi";
 import DataTable from "./DataTable";
-import { tableData } from "../../constants/tableData";
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { closestCenter, DndContext, DragOverlay, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
+import { 
+  DndContext, 
+  closestCenter,
+  DragOverlay,
+  KeyboardSensor, 
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+} from "@dnd-kit/core";
 import { doc, updateDoc } from "firebase/firestore";
 import { getTaskData } from "../../utils/taskGetService";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -22,13 +30,20 @@ import { useDispatch } from "react-redux";
 import { db } from "../../config/firebase";
 import { reorderTasks } from "../../redux/reducers/systemConfigReducer";
 
-const Droppable = ({id, children}) => {
-  const {setNodeRef} = useDroppable({
-    id: id,
+const Droppable = ({ id, children }) => {
+  const { isOver, setNodeRef } = useDroppable({
+    id,
   });
 
   return (
-    <div ref={setNodeRef}>
+    <div 
+      ref={setNodeRef}
+      style={{
+        minHeight: "100px",
+        backgroundColor: isOver ? 'rgba(0, 0, 0, 0.05)' : undefined,
+        transition: 'background-color 0.2s ease'
+      }}
+    >
       {children}
     </div>
   );
@@ -37,12 +52,11 @@ const Droppable = ({id, children}) => {
 const ListView = () => {
   const [addTableRow, setAddTableRow] = useState(false);
   const [addRow, setAddRow] = useState({});
-  const [listRows, setListRows] = useState(tableData);
   const [activeId, setActiveId] = useState(null);
   const dispatch = useDispatch();
 
   const getTaskDetails = useSelector(
-    (state: any) => state?.systemConfigReducer?.taskGetDetails
+    (state) => state?.systemConfigReducer?.taskGetDetails
   );
 
   const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
@@ -50,7 +64,11 @@ const ListView = () => {
   const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -62,21 +80,23 @@ const ListView = () => {
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
+    
     if (!over) return;
-  
+
     const draggedTask = getTaskDetails.find(task => task.id === active.id);
     if (!draggedTask) return;
-  
-    if (over.id === 'todo' || over.id === 'inProgress' || over.id === 'completed') {
-      const statusMap = {
-        'todo': { id: 'T', label: 'TODO' },
-        'inProgress': { id: 'P', label: 'In Progress' },
-        'completed': { id: 'C', label: 'Completed' }
-      };
-  
+
+    const statusMap = {
+      'todo': { id: 'T', label: 'TODO' },
+      'inProgress': { id: 'P', label: 'In Progress' },
+      'completed': { id: 'C', label: 'Completed' }
+    };
+
+    // Handle drops between sections
+    if (over.id in statusMap) {
       const newStatusInfo = statusMap[over.id];
       
-      if (newStatusInfo && draggedTask.statusId !== newStatusInfo.id) {
+      if (draggedTask.statusId !== newStatusInfo.id) {
         try {
           const taskRef = doc(db, "tasks", draggedTask.id);
           await updateDoc(taskRef, {
@@ -89,6 +109,7 @@ const ListView = () => {
         }
       }
     }
+    // Handle reordering within the same section
     else if (active.id !== over.id) {
       const oldIndex = getTaskDetails.findIndex(task => task.id === active.id);
       const newIndex = getTaskDetails.findIndex(task => task.id === over.id);
@@ -96,6 +117,15 @@ const ListView = () => {
       const reorderedTasks = arrayMove(getTaskDetails, oldIndex, newIndex);
       dispatch(reorderTasks(reorderedTasks));
     }
+    
+    setActiveId(null);
+  };
+
+  const handleDragOver = (event) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    // Implement any custom drag over logic here if needed
   };
 
   return (
@@ -121,33 +151,26 @@ const ListView = () => {
                     <input
                       id="checkbox-all-search"
                       type="checkbox"
-                      className="w-4 h-4 text-blue-800 "
+                      className="w-4 h-4 text-blue-800"
                     />
                   </div>
                 </th>
                 <th scope="col w-4 p-4"></th>
-                <th scope="col" className="">
-                  Task name
-                </th>
-                <th scope="col" className="">
-                  Due Date
-                </th>
-                <th scope="col" className="">
-                  Status
-                </th>
-                <th scope="col" className="">
-                  Category
-                </th>
-                <th scope="col" className=""></th>
+                <th scope="col">Task name</th>
+                <th scope="col">Due Date</th>
+                <th scope="col">Status</th>
+                <th scope="col">Category</th>
+                <th scope="col"></th>
               </tr>
             </thead>
           </table>
-          <div className="mt-4">
+          
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            onDragOver={handleDragOver}
           >
             <div className="mt-4">
               <Accordion defaultExpanded>
@@ -173,7 +196,7 @@ const ListView = () => {
                     </Button>
                     <Divider />
                   </Box>
-                  <Droppable id="todo-droppable">
+                  <Droppable id="todo">
                     {todoTasks.length > 0 ? (
                       <DataTable
                         rows={todoTasks}
@@ -183,7 +206,9 @@ const ListView = () => {
                         setAddRow={setAddRow}
                       />
                     ) : (
-                      "No Tasks in To-Do"
+                      <div className="p-4 text-center text-gray-500">
+                        No Tasks in To-Do
+                      </div>
                     )}
                   </Droppable>
                 </AccordionDetails>
@@ -201,7 +226,7 @@ const ListView = () => {
                 <AccordionDetails
                   sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
                 >
-                  <Droppable id="inProgress-droppable">
+                  <Droppable id="inProgress">
                     {inProgressTasks.length > 0 ? (
                       <DataTable
                         rows={inProgressTasks}
@@ -209,7 +234,9 @@ const ListView = () => {
                         setAddRow={setAddRow}
                       />
                     ) : (
-                      "No Tasks in Progress"
+                      <div className="p-4 text-center text-gray-500">
+                        No Tasks in Progress
+                      </div>
                     )}
                   </Droppable>
                 </AccordionDetails>
@@ -227,7 +254,7 @@ const ListView = () => {
                 <AccordionDetails
                   sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
                 >
-                  <Droppable id="completed-droppable">
+                  <Droppable id="completed">
                     {completedTasks.length > 0 ? (
                       <DataTable
                         rows={completedTasks}
@@ -235,7 +262,9 @@ const ListView = () => {
                         setAddRow={setAddRow}
                       />
                     ) : (
-                      "No Tasks in Completed"
+                      <div className="p-4 text-center text-gray-500">
+                        No Tasks in Completed
+                      </div>
                     )}
                   </Droppable>
                 </AccordionDetails>
@@ -250,7 +279,6 @@ const ListView = () => {
               ) : null}
             </DragOverlay>
           </DndContext>
-          </div>
         </div>
       </div>
     </>
