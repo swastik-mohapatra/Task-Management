@@ -130,7 +130,6 @@ const ListView = () => {
   return (
     <>
       <div className="mt-2">
-        <FilterCreateTasks />
         <div className="mt-6">
           <Divider />
           <table className="w-full text-sm text-left rtl:text-right hidden sm:table">

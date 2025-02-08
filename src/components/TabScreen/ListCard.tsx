@@ -1,72 +1,51 @@
-import { Reorder } from "framer-motion";
 import { useState } from "react";
-import { TableRow } from "../../constants/tableData";
-import { FiEdit3 } from "react-icons/fi";
-import { MdDelete } from "react-icons/md";
-import { IoIosMore } from "react-icons/io";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
-  Box,
   Card,
-  CardContent,
   CardHeader,
+  CardContent,
   IconButton,
-  ListItemIcon,
   Menu,
   MenuItem,
+  ListItemIcon,
+  Box,
   Typography,
 } from "@mui/material";
+import { IoIosMore } from "react-icons/io";
+import { FiEdit3 } from "react-icons/fi";
+import { MdDelete } from "react-icons/md";
 import dayjs from "dayjs";
-import { db } from "../../config/firebase";
 import { deleteDoc, doc } from "firebase/firestore";
+import { db } from "../../config/firebase";
 import { getTaskData } from "../../utils/taskGetService";
 import { useDispatch } from "react-redux";
 import { setAccessData } from "../../redux/reducers/systemConfigReducer";
 import AddTaskModal from "../AddTaskModal";
 
-interface DataTableProps {
-  rows: TableRow[];
-  setBoardCards: (rows: TableRow[]) => void;
-}
+const ListCard = ({ card }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: card.id });
 
-const ListCard = ({ rows, setBoardCards }: DataTableProps) => {
-  const [cards, setCards] = useState<TableRow[]>(rows);
-
-  const handleReorder = (newOrder: TableRow[]) => {
-    setCards(newOrder);
-    setBoardCards(newOrder); // Update the parent state if needed
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: "grab",
   };
 
-  return (
-    <Box
-      sx={{
-        width: "100%",
-        display: "flex",
-        flexWrap: "wrap",
-        flexDirection: "column",
-        gap: 2,
-      }}
-    >
-      <Reorder.Group
-        axis="y" // Allow vertical dragging
-        values={cards}
-        onReorder={handleReorder}
-      >
-        {cards.map((card) => (
-          <DraggableCard key={card.id} card={card} />
-        ))}
-      </Reorder.Group>
-    </Box>
-  );
-};
-
-export default ListCard;
-
-const DraggableCard = ({ card }: { card: TableRow }) => {
   const [openAddModal, setOpenAddModal] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const dispatch = useDispatch();
 
-  const handleClickMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClickMenu = (event) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
@@ -74,25 +53,23 @@ const DraggableCard = ({ card }: { card: TableRow }) => {
     setAnchorEl(null);
   };
 
-  const deleteTask = async (id: string) => {
+  const deleteTask = async (id) => {
+    dispatch(setAccessData({ type: "loading", response: true }));
     try {
       const taskDoc = doc(db, "tasks", id);
       await deleteDoc(taskDoc);
-      getTaskData(dispatch);
+      await getTaskData(dispatch);
     } catch (error) {
       console.error("Error deleting task:", error);
+    } finally {
+      dispatch(setAccessData({ type: "loading", response: false }));
+      setAnchorEl(null);
     }
-    setAnchorEl(null);
   };
 
   return (
-    <Reorder.Item
-      value={card} // The item being dragged
-      whileDrag={{ scale: 1.05 }} // Add scaling effect while dragging
-    >
-      <Card
-        sx={{ borderRadius: 4, marginBottom:"10px"}}
-      >
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <Card sx={{ borderRadius: 4, marginBottom: "10px" }}>
         <CardHeader
           action={
             <>
@@ -103,6 +80,7 @@ const DraggableCard = ({ card }: { card: TableRow }) => {
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleCloseMenu}
+                onClick={(e) => e.stopPropagation()}
                 MenuListProps={{
                   "aria-labelledby": `more-menu-button-${card?.id}`,
                 }}
@@ -120,7 +98,7 @@ const DraggableCard = ({ card }: { card: TableRow }) => {
                       })
                     );
                     setAnchorEl(null);
-                    setOpenAddModal(!openAddModal);
+                    setOpenAddModal(true);
                   }}
                 >
                   <ListItemIcon>
@@ -142,7 +120,7 @@ const DraggableCard = ({ card }: { card: TableRow }) => {
           }
           title={card?.taskName}
         />
-        <CardContent sx={{ height: "100%" }}>
+        <CardContent>
           <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
             <Typography variant="body2" color="text.secondary">
               {card?.category}
@@ -152,13 +130,15 @@ const DraggableCard = ({ card }: { card: TableRow }) => {
             </Typography>
           </Box>
         </CardContent>
-        {openAddModal && (
-          <AddTaskModal
-            openAddModal={openAddModal}
-            setOpenAddModal={setOpenAddModal}
-          />
-        )}
       </Card>
-    </Reorder.Item>
+      {openAddModal && (
+        <AddTaskModal
+          openAddModal={openAddModal}
+          setOpenAddModal={setOpenAddModal}
+        />
+      )}
+    </div>
   );
 };
+
+export default ListCard;

@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import { getTaskData } from "../utils/taskGetService";
 import { useSelector } from "react-redux";
 import { Bars } from "react-loader-spinner";
+import FilterCreateTasks from "./FilterCreateTasks";
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -42,7 +43,6 @@ export default function BasicTabs() {
   const loader = useSelector(
     (state: any) => state?.systemConfigReducer?.loading
   );
-  console.log(loader);
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -73,16 +73,14 @@ export default function BasicTabs() {
             overflowY: "auto",
           }}
         >
-          {/* <Box sx={{ color: "white" }}>Loading ....</Box> */}
           <Box sx={{ color: "white" }}>
             <Bars
               visible={true}
-              height="80"
-              width="80"
+              height="100"
+              width="100"
               color="#FFFAEA"
               ariaLabel="grid-loading"
               radius="12.5"
-              wrapperStyle={{}}
               wrapperClass="grid-wrapper"
             />
           </Box>
@@ -115,6 +113,7 @@ export default function BasicTabs() {
               />
             </Tabs>
           </Box>
+          <FilterCreateTasks/>
           <CustomTabPanel value={value} index={0}>
             <ListView />
           </CustomTabPanel>

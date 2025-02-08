@@ -97,7 +97,7 @@ const FilterCreateTasks = () => {
     <>
       <div
         className={`flex ${
-          isSmallScreen ? "flex-col gap-3" : "justify-between items-center"
+          isSmallScreen ? "flex-col gap-3" : "justify-between items-center mt-5"
         }`}
       >
         <div className={`flex ${isSmallScreen ? "flex-col gap-2" : "gap-4"}`}>

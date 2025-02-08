@@ -54,15 +54,19 @@ const CheckDelUpModal = () => {
       });
     });
 
-    batch
-      .commit()
-      .then(() => {
-        dispatch(setAccessData({ type: "taskIdDetails", response: [] }));
-        getTaskData(dispatch);
-      })
-      .catch((error) => console.error("Error updating status:", error));
-
-    handleClose();
+    try {
+      batch
+        .commit()
+        .then(() => {
+          dispatch(setAccessData({ type: "taskIdDetails", response: [] }));
+          getTaskData(dispatch);
+        })
+        .catch((error) => console.error("Error updating status:", error));
+      handleClose();
+    } catch (error) {
+      console.error(error);
+      dispatch(setAccessData({ type: "loading", response: false }));
+    }
   };
 
   const handleBatchDelete = async () => {
@@ -73,12 +77,15 @@ const CheckDelUpModal = () => {
       batch.delete(taskRef);
     });
 
+    dispatch(setAccessData({ type: "loading", response: true }));
     try {
       await batch.commit();
       dispatch(setAccessData({ type: "taskIdDetails", response: [] }));
       getTaskData(dispatch);
+      dispatch(setAccessData({ type: "loading", response: false }));
     } catch (error) {
       console.error("Error deleting tasks:", error);
+      dispatch(setAccessData({ type: "loading", response: false }));
     }
   };
 
