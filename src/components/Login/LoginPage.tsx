@@ -30,9 +30,9 @@ const LoginPage = ({ setUser }: LoginPageProps) => {
 
   return (
     <div className="relative flex flex-col items-center justify-center h-screen bg-[#FFF9F9] overflow-hidden">
-      <div className="absolute w-[900px] h-[900px] border border-[#cf9ef0] rounded-full top-[-170px] left-[30%] sm:left-[70%]"></div>
-      <div className="absolute w-[600px] h-[600px] border border-[#eba3ef] rounded-full top-[-100px] left-[35%] sm:left-[60%]"></div>
-      <div className="absolute w-[400px] h-[400px] border border-[#e972e5] rounded-full top-[-50px] left-[40%] sm:left-[50%]"></div>
+      <div className="absolute w-[600px] h-[600px] border border-[#bd69f5] rounded-full top-[-150px] left-[30%] sm:left-[40%]"></div>
+      <div className="absolute w-[450px] h-[450px] border border-[#d16ef8] rounded-full top-[-100px] left-[35%] sm:left-[45%]"></div>
+      <div className="absolute w-[300px] h-[300px] border border-[#d8a4f5] rounded-full top-[-50px] left-[40%] sm:left-[50%]"></div>
 
 
       <div className="relative sm:grid sm:grid-cols-2 justify-center gap-6 z-10">

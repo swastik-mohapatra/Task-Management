@@ -1,50 +1,37 @@
-# React + TypeScript + Vite
+Task Management
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The Task management is an application that has been designed as part of assignment that follows CRUD operation of tasks (create, read, delete, update) and other functions like filter, sorting, searching authentication etc.
 
-Currently, two official plugins are available:
+Instructions:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Login to the application using Google Authentication.
+Page opens with all your existing tasks will open. In case of no tasks it will appear blank .
+Click on Add Task and fill all the details and click on Create for new task creation. Attachments can be updated here .
+Click on three dots of the last column , click on edit and click on Update after updating the info. For updating attachment , you can delete or add the attachments required
+For deleting task, select the Delete button from the list .
+For mass delete and Status update, select the rows which you want to perform the operation and click on Delete for mass Delete and Status for status update.
+You can drag within the Task category as well as across the task categories. You have to simply hold the row and put it in the category which you want , it will update automatically.
+You can switch between List View and Board Kanban View to Perform tasks.
 
-## Expanding the ESLint configuration
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+Features:
 
-- Configure the top-level `parserOptions` property like this:
+CRUD operations : User can create,read , update, and delete his/her task.
+Drag and drop : User can drag and drop his/her task within the categories upon his/her convenience.
+Batch call for delete and status update: User can select multiple rows and do mass delete of records and update for status .
+Filter, Sorting and Search: Searching is enabled for Task name, Filter can be done on the basis of Category, Sorting is based on due date.
+Firebase cloud: FIrebase cloud is utilised for Storing of the tasks .
+Cloudinary: It is a third party storage service storing files. 
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+Challenges:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+Firebase Storage : Due to movement of firebase storage into base plan , There was no methodology to upload files in Firebase. That’s where Cloudinary comes into play.
+Drag and drop: Drag and drop between categories was a challenging one as till the last only functionality within compartments was going on. It involved change in code base to implement the functionality. Even buttons within functionality were not clickable.
+Query management: More than one query was not allowing to do search, filter and sort.
+Responsive Design: Responsive features were different from the web version, some new feature also implemented 
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+
+Github url : Task Management- Github
+Application url:
+Firebase: Firebase - Task Management
