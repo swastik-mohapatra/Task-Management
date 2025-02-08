@@ -25,14 +25,12 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import {  deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { getTaskData } from "../../utils/taskGetService";
 import { useDispatch } from "react-redux";
 import AddTaskModal from "../AddTaskModal";
-import {
-  setAccessData,
-} from "../../redux/reducers/systemConfigReducer";
+import { setAccessData } from "../../redux/reducers/systemConfigReducer";
 import { useSelector } from "react-redux";
 import CheckDelUpModal from "../CheckDelUpModal";
 
@@ -42,18 +40,28 @@ interface DataTableProps {
   setAddTableRow: (value: boolean) => void;
 }
 
-const DraggableRow = ({ row, children }: { row: TableRow; children: ReactNode }) => {
+const DraggableRow = ({
+  row,
+  children,
+}: {
+  row: TableRow;
+  children: ReactNode;
+}) => {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-    isDragging
+    isDragging,
   } = useSortable({ id: row.id });
 
   const DragHandle = () => (
-    <td className="w-4 p-4 cursor-move hidden sm:table-cell" {...listeners} {...attributes}>
+    <td
+      className="w-4 p-4 cursor-move hidden sm:table-cell"
+      {...listeners}
+      {...attributes}
+    >
       ::
     </td>
   );
@@ -81,11 +89,7 @@ const DraggableRow = ({ row, children }: { row: TableRow; children: ReactNode })
     </tr>
   );
 };
-const DataTable = ({
-  rows,
-  addTableRow,
-  setAddTableRow,
-}: DataTableProps) => {
+const DataTable = ({ rows, addTableRow, setAddTableRow }: DataTableProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [currentMenuId, setCurrentMenuId] = useState<string | null>(null);
   const [openAddModal, setOpenAddModal] = useState(false);
@@ -94,22 +98,22 @@ const DataTable = ({
     (state: any) => state?.systemConfigReducer?.taskIdDetails
   );
 
-   const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   const handleCheckboxChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     rowId: string
   ) => {
     event.stopPropagation();
-  
+
     const updatedSelectedRows = event.target.checked
       ? [...(taskIdDetails || []), rowId]
       : (taskIdDetails || []).filter((id: string) => id !== rowId);
-     
+
     dispatch(
-      setAccessData({ 
-        type: "taskIdDetails", 
-        response: updatedSelectedRows 
+      setAccessData({
+        type: "taskIdDetails",
+        response: updatedSelectedRows,
       })
     );
   };
@@ -122,14 +126,14 @@ const DataTable = ({
     event: MouseEvent<HTMLButtonElement>,
     menuId: string
   ) => {
-    event.stopPropagation(); 
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
     setCurrentMenuId(menuId);
   };
 
   const handleCloseMenu = (event: MouseEvent | object) => {
-    if (event && 'stopPropagation' in event) {
-      event.stopPropagation(); 
+    if (event && "stopPropagation" in event) {
+      event.stopPropagation();
     }
     setAnchorEl(null);
     setCurrentMenuId(null);
@@ -158,16 +162,16 @@ const DataTable = ({
     }
   };
 
-  const deleteTask = async (id:any) => {
-    dispatch(setAccessData({ type: "loading", response: true }))
+  const deleteTask = async (id: any) => {
+    dispatch(setAccessData({ type: "loading", response: true }));
     try {
       const taskDoc = doc(db, "tasks", id);
       await deleteDoc(taskDoc);
       getTaskData(dispatch);
-      dispatch(setAccessData({ type: "loading", response: false }))
+      dispatch(setAccessData({ type: "loading", response: false }));
     } catch (error) {
       console.error("Error deleting task:", error);
-      dispatch(setAccessData({ type: "loading", response: false }))
+      dispatch(setAccessData({ type: "loading", response: false }));
     }
     setAnchorEl(null);
     setCurrentMenuId(null);
@@ -357,131 +361,136 @@ const DataTable = ({
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         > */}
-          <SortableContext
-            items={rows.map((row) => row.id)}
-            strategy={verticalListSortingStrategy}
-          >
-        <div className="relative overflow-auto max-h-96">
-          <table className="w-full text-xs text-left">
-            <colgroup>
-              <col className="w-12" />
-              <col className="w-8" />
-              <col className="w-1/4" />
-              <col className="w-1/5" />
-              <col className="w-1/6" />
-              <col className="w-1/6" />
-              <col className="w-12" />
-            </colgroup>
-            <tbody>
-              {rows.map((row) => (
-                <DraggableRow key={row?.id} row={row}>
-                  <td className="w-4 p-4">
-                    <div className="flex items-center">
-                      <input
-                        id={`checkbox-table-search-${row?.id}`}
-                        type="checkbox"
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        onChange={(event) => {
-                          handleCheckboxChange(event, row?.id?.toString());
-                        }}
-                        checked={taskIdDetails?.includes(row?.id)}
-                      />
-                    </div>
-                  </td>
-                  <td className="w-4 p-4 cursor-move hidden sm:table-cell">::</td>
-                  <th
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    <div className="flex items-center gap-2">
-                      <FaCircleCheck
-                        size={20}
-                        color={row.status === "Completed" ? "Green" : "Black"}
-                      />
-                      {row.taskName}
-                    </div>
-                  </th>
-                  <td className="px-6 py-4 hidden sm:table-cell">
-                    {row?.dueDate
-                      ? dayjs(row?.dueDate)?.format("D MMM, YYYY")
-                      : ""}
-                  </td>
-                  <td className="px-6 py-4 hidden sm:table-cell">
-                    <Chip label={row?.status} />
-                  </td>
-                  <td className="px-6 py-4 hidden sm:table-cell">{row?.category}</td>
-                  <td className="px-6 py-4">
-                    <IconButton
-                      aria-controls={
-                        currentMenuId === row.id.toString() ? "menu" : undefined
-                      }
-                      aria-haspopup="true"
-                      onClick={(event) => handleClickMenu(event, row?.id?.toString())}
+        <SortableContext
+          items={rows.map((row) => row.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="relative overflow-auto max-h-96">
+            <table className="w-full text-xs text-left">
+              <colgroup>
+                <col className="w-12" />
+                <col className="w-8" />
+                <col className="w-1/4" />
+                <col className="w-1/5" />
+                <col className="w-1/6" />
+                <col className="w-1/6" />
+                <col className="w-12" />
+              </colgroup>
+              <tbody>
+                {rows.map((row) => (
+                  <DraggableRow key={row?.id} row={row}>
+                    <td className="w-4 p-4">
+                      <div className="flex items-center">
+                        <input
+                          id={`checkbox-table-search-${row?.id}`}
+                          type="checkbox"
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          onChange={(event) => {
+                            handleCheckboxChange(event, row?.id?.toString());
+                          }}
+                          checked={taskIdDetails?.includes(row?.id)}
+                        />
+                      </div>
+                    </td>
+                    <td className="w-4 p-4 cursor-move hidden sm:table-cell">
+                      ::
+                    </td>
+                    <th
+                      scope="row"
+                      className="px-6 py-4 font-medium whitespace-nowrap"
                     >
-                      <IoIosMore />
-                    </IconButton>
-                    <Menu
-                      anchorEl={anchorEl}
-                      open={currentMenuId === row?.id.toString()}
-                      onClick={(e) => e.stopPropagation()}
-                      onClose={handleCloseMenu}
-                      sx={{
-                        "& .MuiPaper-root": {
-                          backgroundColor: "#FFF9F9",
-                          borderColor: "#7B198426",
-                        },
-                      }}
-                    >
-                      <MenuItem
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          dispatch(
-                            setAccessData({
-                              type: "taskDetails",
-                              response: {
-                                ...row,
-                                status: row?.statusId,
-                                category: row?.categoryId,
-                              },
-                            })
-                          );
-                          setAnchorEl(null);
-                          setCurrentMenuId(null);
-                          setOpenAddModal(!openAddModal);
+                      <div className="flex items-center gap-2">
+                        <FaCircleCheck
+                          size={20}
+                          color={row.status === "Completed" ? "Green" : "Black"}
+                        />
+                        {row.taskName}
+                      </div>
+                    </th>
+                    <td className="px-6 py-4 hidden sm:table-cell">
+                      {row?.dueDate
+                        ? dayjs(row?.dueDate).isSame(dayjs(), "day")
+                          ? "Today"
+                          : dayjs(row?.dueDate).format("D MMM, YYYY")
+                        : ""}
+                    </td>
+
+                    <td className="px-6 py-4 hidden sm:table-cell">
+                      <Chip label={row?.status} />
+                    </td>
+                    <td className="px-6 py-4 hidden sm:table-cell">
+                      {row?.category}
+                    </td>
+                    <td className="px-6 py-4">
+                      <IconButton
+                        aria-controls={
+                          currentMenuId === row.id.toString()
+                            ? "menu"
+                            : undefined
+                        }
+                        aria-haspopup="true"
+                        onClick={(event) =>
+                          handleClickMenu(event, row?.id?.toString())
+                        }
+                      >
+                        <IoIosMore />
+                      </IconButton>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={currentMenuId === row?.id.toString()}
+                        onClick={(e) => e.stopPropagation()}
+                        onClose={handleCloseMenu}
+                        sx={{
+                          "& .MuiPaper-root": {
+                            backgroundColor: "#FFF9F9",
+                            borderColor: "#7B198426",
+                          },
                         }}
                       >
-                        <ListItemIcon>
-                          <FiEdit3 />
-                        </ListItemIcon>
-                        Edit
-                      </MenuItem>
-                      <MenuItem
-                        sx={{ color: "red" }}
-                        onClick={() => deleteTask(row?.id)}
-                      >
-                        <ListItemIcon>
-                          <MdDelete color="red" />
-                        </ListItemIcon>
-                        Delete
-                      </MenuItem>
-                    </Menu>
-                  </td>
-                </DraggableRow>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        <MenuItem
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            dispatch(
+                              setAccessData({
+                                type: "taskDetails",
+                                response: {
+                                  ...row,
+                                  status: row?.statusId,
+                                  category: row?.categoryId,
+                                },
+                              })
+                            );
+                            setAnchorEl(null);
+                            setCurrentMenuId(null);
+                            setOpenAddModal(!openAddModal);
+                          }}
+                        >
+                          <ListItemIcon>
+                            <FiEdit3 />
+                          </ListItemIcon>
+                          Edit
+                        </MenuItem>
+                        <MenuItem
+                          sx={{ color: "red" }}
+                          onClick={() => deleteTask(row?.id)}
+                        >
+                          <ListItemIcon>
+                            <MdDelete color="red" />
+                          </ListItemIcon>
+                          Delete
+                        </MenuItem>
+                      </Menu>
+                    </td>
+                  </DraggableRow>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </SortableContext>
         {openAddModal && (
-          <AddTaskModal
-            addText={false}
-            setOpenAddModal={setOpenAddModal}
-          />
+          <AddTaskModal addText={false} setOpenAddModal={setOpenAddModal} />
         )}
-        {taskIdDetails.length > 0 && (
-          <CheckDelUpModal
-/>
-        )}
+        {taskIdDetails.length > 0 && <CheckDelUpModal />}
       </div>
     </>
   );
