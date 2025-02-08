@@ -157,6 +157,7 @@ const AddTaskModal = ({
       }
     });
 
+    dispatch(setAccessData({ type: "loading", response: true }))
     try {
       const fileData = await Promise.all(fileUploadPromises);
 
@@ -181,9 +182,9 @@ const AddTaskModal = ({
 
       const taskRef = await addDoc(taskCollectionRef, formattedTaskDetail);
       await addLogActivity(taskRef.id, "Task Created");
-
       getTaskData(dispatch);
       dispatch(setAccessData({ type: "taskDetails", response: {} }));
+      dispatch(setAccessData({ type: "loading", response: false }))
       setSelectedFiles([]);
       setOpenAddModal(false);
     } catch (err) {
@@ -213,6 +214,7 @@ const AddTaskModal = ({
 
     const taskUpdateDoc = doc(db, "tasks", id);
     try {
+      dispatch(setAccessData({ type: "loading", response: true }))
       const currentTaskDoc = await getDoc(taskUpdateDoc);
       const currentTaskData = currentTaskDoc.data();
 
@@ -252,7 +254,9 @@ const AddTaskModal = ({
       getTaskData(dispatch);
       dispatch(setAccessData({ type: "taskDetails", response: {} }));
       setOpenAddModal(false);
+      dispatch(setAccessData({ type: "loading", response: false }))
     } catch (err) {
+      dispatch(setAccessData({ type: "loading", response: false }))
       console.error("Error updating document: ", err);
     }
   };

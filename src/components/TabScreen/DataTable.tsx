@@ -200,12 +200,15 @@ const DataTable = ({
   };
 
   const deleteTask = async (id) => {
+    dispatch(setAccessData({ type: "loading", response: true }))
     try {
       const taskDoc = doc(db, "tasks", id);
       await deleteDoc(taskDoc);
       getTaskData(dispatch);
+      dispatch(setAccessData({ type: "loading", response: false }))
     } catch (error) {
       console.error("Error deleting task:", error);
+      dispatch(setAccessData({ type: "loading", response: false }))
     }
     setAnchorEl(null);
     setCurrentMenuId(null);

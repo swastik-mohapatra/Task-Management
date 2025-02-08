@@ -6,10 +6,12 @@ import { TfiViewList } from "react-icons/tfi";
 import { MdInsertChartOutlined } from "react-icons/md";
 import ListView from "./TabScreen/ListView";
 import BoradView from "./TabScreen/BoradView";
-import { useMediaQuery } from "@mui/material"; 
-import { useTheme } from "@mui/material/styles"; 
+import { useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useDispatch } from "react-redux";
 import { getTaskData } from "../utils/taskGetService";
+import { useSelector } from "react-redux";
+import { Bars } from "react-loader-spinner";
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -36,50 +38,91 @@ function CustomTabPanel(props: TabPanelProps) {
 export default function BasicTabs() {
   const dispatch = useDispatch();
   const [value, setValue] = useState(0);
-  
+
+  const loader = useSelector(
+    (state: any) => state?.systemConfigReducer?.loading
+  );
+  console.log(loader);
+
   const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm")); 
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     getTaskData(dispatch);
   }, []);
 
   if (isSmallScreen) {
-    return <ListView />; 
+    return <ListView />;
   }
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Box>
-        <Tabs
-          value={value}
-          onChange={(event: SyntheticEvent, newValue: number) => setValue(newValue)}
-          aria-label="basic tabs example"
+      {loader ? (
+        <Box
           sx={{
-            "& .Mui-selected": { color: "black !important" },
-            "& .MuiTabs-indicator": { backgroundColor: "black" },
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+            overflowY: "auto",
           }}
         >
-          <Tab
-            label="List"
-            icon={<TfiViewList />}
-            iconPosition="start"
-            sx={{ textTransform: "capitalize" }}
-          />
-          <Tab
-            label="Board"
-            icon={<MdInsertChartOutlined />}
-            iconPosition="start"
-            sx={{ textTransform: "capitalize" }}
-          />
-        </Tabs>
-      </Box>
-      <CustomTabPanel value={value} index={0}>
-        <ListView />
-      </CustomTabPanel>
-      <CustomTabPanel value={value} index={1}>
-        <BoradView />
-      </CustomTabPanel>
+          {/* <Box sx={{ color: "white" }}>Loading ....</Box> */}
+          <Box sx={{ color: "white" }}>
+            <Bars
+              visible={true}
+              height="80"
+              width="80"
+              color="#FFFAEA"
+              ariaLabel="grid-loading"
+              radius="12.5"
+              wrapperStyle={{}}
+              wrapperClass="grid-wrapper"
+            />
+          </Box>
+        </Box>
+      ) : (
+        <>
+          <Box>
+            <Tabs
+              value={value}
+              onChange={(event: SyntheticEvent, newValue: number) =>
+                setValue(newValue)
+              }
+              aria-label="basic tabs example"
+              sx={{
+                "& .Mui-selected": { color: "black !important" },
+                "& .MuiTabs-indicator": { backgroundColor: "black" },
+              }}
+            >
+              <Tab
+                label="List"
+                icon={<TfiViewList />}
+                iconPosition="start"
+                sx={{ textTransform: "capitalize" }}
+              />
+              <Tab
+                label="Board"
+                icon={<MdInsertChartOutlined />}
+                iconPosition="start"
+                sx={{ textTransform: "capitalize" }}
+              />
+            </Tabs>
+          </Box>
+          <CustomTabPanel value={value} index={0}>
+            <ListView />
+          </CustomTabPanel>
+          <CustomTabPanel value={value} index={1}>
+            <BoradView />
+          </CustomTabPanel>
+        </>
+      )}
     </Box>
   );
 }

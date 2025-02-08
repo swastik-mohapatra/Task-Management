@@ -28,7 +28,7 @@ import { getTaskData } from "../../utils/taskGetService";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useDispatch } from "react-redux";
 import { db } from "../../config/firebase";
-import { reorderTasks } from "../../redux/reducers/systemConfigReducer";
+import { reorderTasks, setAccessData } from "../../redux/reducers/systemConfigReducer";
 
 const Droppable = ({ id, children }) => {
   const { isOver, setNodeRef } = useDroppable({
@@ -96,6 +96,7 @@ const ListView = () => {
       const newStatusInfo = statusMap[over?.id];
       
       if (draggedTask.statusId !== newStatusInfo.id) {
+         dispatch(setAccessData({ type: "loading", response: true }))
         try {
           const taskRef = doc(db, "tasks", draggedTask.id);
           await updateDoc(taskRef, {
@@ -103,8 +104,10 @@ const ListView = () => {
             status: newStatusInfo.label
           });
           await getTaskData(dispatch);
+           dispatch(setAccessData({ type: "loading", response: false }))
         } catch (error) {
           console.error("Error updating task status:", error);
+           dispatch(setAccessData({ type: "loading", response: false }))
         }
       }
     }
