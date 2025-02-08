@@ -53,15 +53,19 @@ const CheckDelUpModal = () => {
         statusId: statusKey,
       });
     });
-
+    dispatch(setAccessData({ type: "loading", response: true }));
     try {
       batch
         .commit()
         .then(() => {
           dispatch(setAccessData({ type: "taskIdDetails", response: [] }));
           getTaskData(dispatch);
+          dispatch(setAccessData({ type: "loading", response: false }));
         })
-        .catch((error) => console.error("Error updating status:", error));
+        .catch((error) => {
+          console.error("Error updating status:", error);
+          dispatch(setAccessData({ type: "loading", response: true }));
+        });
       handleClose();
     } catch (error) {
       console.error(error);
