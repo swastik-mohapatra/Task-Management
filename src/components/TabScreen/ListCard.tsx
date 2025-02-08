@@ -1,4 +1,4 @@
-import {  useState } from "react";
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -28,14 +28,14 @@ interface Card {
   category: string;
   dueDate?: string;
   statusId: string;
-  categoryId?: string;  
+  categoryId?: string;
 }
 
 interface ListCardProps {
   card: Card;
 }
 
-const ListCard = ({ card }:ListCardProps) => {
+const ListCard = ({ card }: ListCardProps) => {
   const {
     attributes,
     listeners,
@@ -65,7 +65,7 @@ const ListCard = ({ card }:ListCardProps) => {
     setAnchorEl(null);
   };
 
-  const deleteTask = async (id:any) => {
+  const deleteTask = async (id: any) => {
     dispatch(setAccessData({ type: "loading", response: true }));
     try {
       const taskDoc = doc(db, "tasks", id);
@@ -133,7 +133,9 @@ const ListCard = ({ card }:ListCardProps) => {
           title={card?.taskName}
         />
         <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+          <Box
+            sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}
+          >
             <Typography variant="body2" color="text.secondary">
               {card?.category}
             </Typography>
@@ -144,10 +146,7 @@ const ListCard = ({ card }:ListCardProps) => {
         </CardContent>
       </Card>
       {openAddModal && (
-        <AddTaskModal
-          addText={false}
-          setOpenAddModal={setOpenAddModal}
-        />
+        <AddTaskModal addText={false} setOpenAddModal={setOpenAddModal} />
       )}
     </div>
   );
