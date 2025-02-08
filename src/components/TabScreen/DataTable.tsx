@@ -391,11 +391,11 @@ const DataTable = ({
           </table>
         )}
 
-        <DndContext
+        {/* <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
-        >
+        > */}
           <SortableContext
             items={rows.map((row) => row.id)}
             strategy={verticalListSortingStrategy}
@@ -511,7 +511,7 @@ const DataTable = ({
           </table>
         </div>
         </SortableContext>
-        </DndContext>
+        {/* </DndContext> */}
         {openAddModal && (
           <AddTaskModal
             openAddModal={openAddModal}

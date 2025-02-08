@@ -14,11 +14,32 @@ import DataTable from "./DataTable";
 import { tableData } from "../../constants/tableData";
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { closestCenter, DndContext, DragOverlay, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
+import { doc, updateDoc } from "firebase/firestore";
+import { getTaskData } from "../../utils/taskGetService";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useDispatch } from "react-redux";
+import { db } from "../../config/firebase";
+import { reorderTasks } from "../../redux/reducers/systemConfigReducer";
+
+const Droppable = ({id, children}) => {
+  const {setNodeRef} = useDroppable({
+    id: id,
+  });
+
+  return (
+    <div ref={setNodeRef}>
+      {children}
+    </div>
+  );
+};
 
 const ListView = () => {
   const [addTableRow, setAddTableRow] = useState(false);
   const [addRow, setAddRow] = useState({});
   const [listRows, setListRows] = useState(tableData);
+  const [activeId, setActiveId] = useState(null);
+  const dispatch = useDispatch();
 
   const getTaskDetails = useSelector(
     (state: any) => state?.systemConfigReducer?.taskGetDetails
@@ -27,6 +48,55 @@ const ListView = () => {
   const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
   const inProgressTasks = getTaskDetails.filter((row) => row.statusId === "P");
   const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over) return;
+  
+    const draggedTask = getTaskDetails.find(task => task.id === active.id);
+    if (!draggedTask) return;
+  
+    if (over.id === 'todo' || over.id === 'inProgress' || over.id === 'completed') {
+      const statusMap = {
+        'todo': { id: 'T', label: 'TODO' },
+        'inProgress': { id: 'P', label: 'In Progress' },
+        'completed': { id: 'C', label: 'Completed' }
+      };
+  
+      const newStatusInfo = statusMap[over.id];
+      
+      if (newStatusInfo && draggedTask.statusId !== newStatusInfo.id) {
+        try {
+          const taskRef = doc(db, "tasks", draggedTask.id);
+          await updateDoc(taskRef, {
+            statusId: newStatusInfo.id,
+            status: newStatusInfo.label
+          });
+          await getTaskData(dispatch);
+        } catch (error) {
+          console.error("Error updating task status:", error);
+        }
+      }
+    }
+    else if (active.id !== over.id) {
+      const oldIndex = getTaskDetails.findIndex(task => task.id === active.id);
+      const newIndex = getTaskDetails.findIndex(task => task.id === over.id);
+      
+      const reorderedTasks = arrayMove(getTaskDetails, oldIndex, newIndex);
+      dispatch(reorderTasks(reorderedTasks));
+    }
+  };
 
   return (
     <>
@@ -73,93 +143,113 @@ const ListView = () => {
             </thead>
           </table>
           <div className="mt-4">
-            <Accordion defaultExpanded>
-              <AccordionSummary
-                expandIcon={<MdExpandMore />}
-                aria-controls="panel1-content"
-                id="panel1-header"
-                sx={{ backgroundColor: "#FAC3FF" }}
-              >
-                <Typography component="span">Todo</Typography>
-              </AccordionSummary>
-              <AccordionDetails
-                sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
-              >
-                <Box className="hidden sm:block">
-                  <Button
-                    variant="text"
-                    startIcon={<FiPlus />}
-                    sx={{ color: "#000000", textTransform: "capitalize" }}
-                    onClick={() => {
-                      setAddTableRow(!addTableRow);
-                    }}
-                  >
-                    Add Task
-                  </Button>
-                  <Divider />
-                </Box>
-                {todoTasks.length > 0 ? (
-                  <DataTable
-                    rows={todoTasks}
-                    addTableRow={addTableRow}
-                    setAddTableRow={setAddTableRow}
-                    addRow={addRow}
-                    setAddRow={setAddRow}
-                    setListRows={setListRows}
-                  />
-                ) : (
-                  "No Tasks in To-Do"
-                )}
-              </AccordionDetails>
-            </Accordion>
-            <Accordion defaultExpanded>
-              <AccordionSummary
-                expandIcon={<MdExpandMore />}
-                aria-controls="panel2-content"
-                id="panel2-header"
-                sx={{ backgroundColor: "#85D9F1" }}
-              >
-                <Typography component="span">In-Progress</Typography>
-              </AccordionSummary>
-              <AccordionDetails
-                sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
-              >
-                {inProgressTasks.length > 0 ? (
-                  <DataTable
-                    rows={inProgressTasks}
-                    addRow={addRow}
-                    setAddRow={setAddRow}
-                    setListRows={setListRows}
-                  />
-                ) : (
-                  "No Tasks in Progress"
-                )}
-              </AccordionDetails>
-            </Accordion>
-            <Accordion defaultExpanded>
-              <AccordionSummary
-                expandIcon={<MdExpandMore />}
-                aria-controls="panel3-content"
-                id="panel3-header"
-                sx={{ backgroundColor: "#CEFFCC" }}
-              >
-                <Typography component="span">Completed</Typography>
-              </AccordionSummary>
-              <AccordionDetails
-                sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
-              >
-                {completedTasks.length > 0 ? (
-                  <DataTable
-                    rows={completedTasks}
-                    addRow={addRow}
-                    setAddRow={setAddRow}
-                    setListRows={setListRows}
-                  />
-                ) : (
-                  "No Tasks in Completed"
-                )}
-              </AccordionDetails>
-            </Accordion>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="mt-4">
+              <Accordion defaultExpanded>
+                <AccordionSummary
+                  expandIcon={<MdExpandMore />}
+                  aria-controls="panel1-content"
+                  id="panel1-header"
+                  sx={{ backgroundColor: "#FAC3FF" }}
+                >
+                  <Typography component="span">Todo</Typography>
+                </AccordionSummary>
+                <AccordionDetails
+                  sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
+                >
+                  <Box className="hidden sm:block">
+                    <Button
+                      variant="text"
+                      startIcon={<FiPlus />}
+                      sx={{ color: "#000000", textTransform: "capitalize" }}
+                      onClick={() => setAddTableRow(!addTableRow)}
+                    >
+                      Add Task
+                    </Button>
+                    <Divider />
+                  </Box>
+                  <Droppable id="todo-droppable">
+                    {todoTasks.length > 0 ? (
+                      <DataTable
+                        rows={todoTasks}
+                        addTableRow={addTableRow}
+                        setAddTableRow={setAddTableRow}
+                        addRow={addRow}
+                        setAddRow={setAddRow}
+                      />
+                    ) : (
+                      "No Tasks in To-Do"
+                    )}
+                  </Droppable>
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion defaultExpanded>
+                <AccordionSummary
+                  expandIcon={<MdExpandMore />}
+                  aria-controls="panel2-content"
+                  id="panel2-header"
+                  sx={{ backgroundColor: "#85D9F1" }}
+                >
+                  <Typography component="span">In-Progress</Typography>
+                </AccordionSummary>
+                <AccordionDetails
+                  sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
+                >
+                  <Droppable id="inProgress-droppable">
+                    {inProgressTasks.length > 0 ? (
+                      <DataTable
+                        rows={inProgressTasks}
+                        addRow={addRow}
+                        setAddRow={setAddRow}
+                      />
+                    ) : (
+                      "No Tasks in Progress"
+                    )}
+                  </Droppable>
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion defaultExpanded>
+                <AccordionSummary
+                  expandIcon={<MdExpandMore />}
+                  aria-controls="panel3-content"
+                  id="panel3-header"
+                  sx={{ backgroundColor: "#CEFFCC" }}
+                >
+                  <Typography component="span">Completed</Typography>
+                </AccordionSummary>
+                <AccordionDetails
+                  sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
+                >
+                  <Droppable id="completed-droppable">
+                    {completedTasks.length > 0 ? (
+                      <DataTable
+                        rows={completedTasks}
+                        addRow={addRow}
+                        setAddRow={setAddRow}
+                      />
+                    ) : (
+                      "No Tasks in Completed"
+                    )}
+                  </Droppable>
+                </AccordionDetails>
+              </Accordion>
+            </div>
+
+            <DragOverlay>
+              {activeId ? (
+                <div className="bg-white shadow-lg rounded p-4">
+                  {getTaskDetails.find(task => task.id === activeId)?.taskName}
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
           </div>
         </div>
       </div>

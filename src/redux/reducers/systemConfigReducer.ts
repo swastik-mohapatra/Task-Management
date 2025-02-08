@@ -27,7 +27,7 @@ export const systemConfigReducer = createSlice({
   
   reducers: {
     setAccessData: (state, action: PayloadAction<AccessDataPayload>) => {
-      state[action.payload.type] = action.payload.response;
+      (state[action.payload.type] as any) = action.payload.response;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
