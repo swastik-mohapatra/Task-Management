@@ -193,56 +193,90 @@ const AddTaskModal = ({
   };
   
   const updateTask = async (id: string) => {
-    const updatePayload = {
-      taskName: taskDetail?.taskName || "",
-      description: taskDetail?.description || "",
-      category: taskDetail?.category === "W" ? "Work" : "Personal",
-      categoryId: taskDetail?.category || "",
-      dueDate: taskDetail?.dueDate
-        ? dayjs(taskDetail?.dueDate).toISOString()
-        : null,
-      status:
-        taskDetail?.status === "T"
-          ? "TODO"
-          : taskDetail?.status === "P"
-          ? "In Progress"
-          : "Completed",
-      statusId: taskDetail?.status || "",
-      userId: auth?.currentUser?.uid,
-      files: taskDetail?.files || [],
-    };
+    const cloudinaryUrl = "https://api.cloudinary.com/v1_1/dzhm9jir2/image/upload";
+
+    const fileUploadPromises = selectedFiles.map(async (file) => {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "Task_Management");
+
+        const response = await fetch(cloudinaryUrl, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload file to Cloudinary");
+        }
+
+        const result = await response.json();
+        console.log("Cloudinary upload response:", result);
+
+        return {
+          name: file.name,
+          url: result.secure_url,
+          type: file.type
+        };
+      } catch (err) {
+        console.error("Error uploading file to Cloudinary: ", err);
+        return null;
+      }
+    });
 
     const taskUpdateDoc = doc(db, "tasks", id);
+
     try {
-      dispatch(setAccessData({ type: "loading", response: true }))
+      dispatch(setAccessData({ type: "loading", response: true }));
+
       const currentTaskDoc = await getDoc(taskUpdateDoc);
       const currentTaskData = currentTaskDoc.data();
 
+      if (!currentTaskData) {
+        console.error("Task not found.");
+        return;
+      }
+
+      const uploadedFiles = await Promise.all(fileUploadPromises);
+      const validUploadedFiles = uploadedFiles.filter((file) => file !== null);
+
+      const updatedFiles = [...(currentTaskData.files || []), ...validUploadedFiles];
+
+      const updatePayload = {
+        taskName: taskDetail?.taskName || "",
+        description: taskDetail?.description || "",
+        category: taskDetail?.category === "W" ? "Work" : "Personal",
+        categoryId: taskDetail?.category || "",
+        dueDate: taskDetail?.dueDate ? dayjs(taskDetail?.dueDate).toISOString() : null,
+        status:
+          taskDetail?.status === "T"
+            ? "TODO"
+            : taskDetail?.status === "P"
+            ? "In Progress"
+            : "Completed",
+        statusId: taskDetail?.status || "",
+        userId: auth?.currentUser?.uid,
+        files: updatedFiles, 
+      };
+
       const changes = [];
       if (updatePayload.taskName !== currentTaskData?.taskName) {
-        changes.push(
-          `Task Name: "${currentTaskData?.taskName}" → "${updatePayload.taskName}"`
-        );
+        changes.push(`Task Name: "${currentTaskData?.taskName}" → "${updatePayload.taskName}"`);
       }
       if (updatePayload.description !== currentTaskData?.description) {
-        changes.push(
-          `Description: "${currentTaskData?.description}" → "${updatePayload.description}"`
-        );
+        changes.push(`Description: "${currentTaskData?.description}" → "${updatePayload.description}"`);
       }
       if (updatePayload.category !== currentTaskData?.category) {
-        changes.push(
-          `Category: "${currentTaskData?.category}" → "${updatePayload.category}"`
-        );
+        changes.push(`Category: "${currentTaskData?.category}" → "${updatePayload.category}"`);
       }
       if (updatePayload.dueDate !== currentTaskData?.dueDate) {
-        changes.push(
-          `Due Date: "${currentTaskData?.dueDate}" → "${updatePayload.dueDate}"`
-        );
+        changes.push(`Due Date: "${currentTaskData?.dueDate}" → "${updatePayload.dueDate}"`);
       }
       if (updatePayload.status !== currentTaskData?.status) {
-        changes.push(
-          `Status: "${currentTaskData?.status}" → "${updatePayload.status}"`
-        );
+        changes.push(`Status: "${currentTaskData?.status}" → "${updatePayload.status}"`);
+      }
+      if (validUploadedFiles.length > 0) {
+        changes.push(`Files: Added ${validUploadedFiles.length} new files`);
       }
 
       await updateDoc(taskUpdateDoc, updatePayload);
@@ -253,13 +287,15 @@ const AddTaskModal = ({
 
       getTaskData(dispatch);
       dispatch(setAccessData({ type: "taskDetails", response: {} }));
+      setSelectedFiles([]);
       setOpenAddModal(false);
-      dispatch(setAccessData({ type: "loading", response: false }))
+      dispatch(setAccessData({ type: "loading", response: false }));
     } catch (err) {
-      dispatch(setAccessData({ type: "loading", response: false }))
+      dispatch(setAccessData({ type: "loading", response: false }));
       console.error("Error updating document: ", err);
     }
   };
+
 
   return (
     <div className="fixed top-0 left-0 w-full h-full bg-black/75 flex justify-center items-center z-[1000] overflow-y-auto">

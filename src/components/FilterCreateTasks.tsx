@@ -4,11 +4,9 @@ import {
   FormControl,
   MenuItem,
   Select,
-  ToggleButton,
-  ToggleButtonGroup,
   useMediaQuery,
 } from "@mui/material";
-import { useState } from "react"; // Removed useEffect
+import { useState } from "react"; 
 import { CiSearch } from "react-icons/ci";
 import AddTaskModal from "./AddTaskModal";
 import { useDispatch, useSelector } from "react-redux";
@@ -40,7 +38,7 @@ const FilterCreateTasks = () => {
   );
 
   const sortOrder = useSelector(
-    (state: { systemConfigReducer: { selectedCategory: string } }) =>
+    (state: { systemConfigReducer: { sortOrder: string } }) =>
       state.systemConfigReducer.sortOrder
   );
 
