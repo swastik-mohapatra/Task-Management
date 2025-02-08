@@ -1,19 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import {
-  Box,
   Button,
   ButtonGroup,
   Divider,
   FormControl,
-  FormControlLabel,
-  FormLabel,
-  InputLabel,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
-  styled,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -22,13 +15,11 @@ import {
   getDocs,
   collection,
   addDoc,
-  deleteDoc,
   updateDoc,
   doc,
   getDoc,
 } from "firebase/firestore";
 import { db, auth } from "../config/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -36,7 +27,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { setAccessData } from "../redux/reducers/systemConfigReducer";
 import dayjs from "dayjs";
 import { getTaskData } from "../utils/taskGetService";
-// import { v2 as cloudinary } from "cloudinary";
 
 interface AddTaskModalProps {
   addText: boolean;

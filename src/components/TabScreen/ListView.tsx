@@ -92,9 +92,8 @@ const ListView = () => {
       'completed': { id: 'C', label: 'Completed' }
     };
 
-    // Handle drops between sections
     if (over.id in statusMap) {
-      const newStatusInfo = statusMap[over.id];
+      const newStatusInfo = statusMap[over?.id];
       
       if (draggedTask.statusId !== newStatusInfo.id) {
         try {
@@ -109,7 +108,6 @@ const ListView = () => {
         }
       }
     }
-    // Handle reordering within the same section
     else if (active.id !== over.id) {
       const oldIndex = getTaskDetails.findIndex(task => task.id === active.id);
       const newIndex = getTaskDetails.findIndex(task => task.id === over.id);
@@ -124,8 +122,6 @@ const ListView = () => {
   const handleDragOver = (event) => {
     const { active, over } = event;
     if (!over) return;
-
-    // Implement any custom drag over logic here if needed
   };
 
   return (

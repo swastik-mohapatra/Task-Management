@@ -511,7 +511,6 @@ const DataTable = ({
           </table>
         </div>
         </SortableContext>
-        {/* </DndContext> */}
         {openAddModal && (
           <AddTaskModal
             openAddModal={openAddModal}
