@@ -41,6 +41,8 @@ const BoardView = () => {
       state.systemConfigReducer.taskGetDetails
   );
 
+  console.log(getTaskDetails)
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const todoTasks = getTaskDetails
     .filter((row: Row) => row.statusId === "T")

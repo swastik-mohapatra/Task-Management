@@ -4,9 +4,11 @@ import {
   FormControl,
   MenuItem,
   Select,
+  ToggleButton,
+  ToggleButtonGroup,
   useMediaQuery,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react"; // Removed useEffect
 import { CiSearch } from "react-icons/ci";
 import AddTaskModal from "./AddTaskModal";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,9 +24,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { getTaskData } from "../utils/taskGetService";
+import { auth } from "../config/firebase";
+import { TbSortAscending, TbSortDescending } from "react-icons/tb";
 
 const FilterCreateTasks = () => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [openAddModal, setOpenAddModal] = useState(false);
   const [addText, setAddText] = useState(false);
 
@@ -32,43 +35,45 @@ const FilterCreateTasks = () => {
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
 
   const selectedCategoryId = useSelector(
-    (state: { systemConfigReducer: { selectedCategory: string } }) => state.systemConfigReducer.selectedCategory
+    (state: { systemConfigReducer: { selectedCategory: string } }) =>
+      state.systemConfigReducer.selectedCategory
   );
 
-  useEffect(() => {
-    if (searchTerm === "") {
-      getTaskData(dispatch);
-      return;
-    }
-
-    const fetchResults = async () => {
-      const q = query(
-        collection(db, "tasks"),
-        orderBy("taskName"),
-        startAt(searchTerm),
-        endAt(searchTerm + "\uf8ff")
-      );
-
-      try {
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as object),
-        }));
-        dispatch(setAccessData({ type: "taskGetDetails", response: data }));
-      } catch (error) {
-        console.error("Error searching tasks:", error);
-      }
-    };
-
-    const timeoutId = setTimeout(fetchResults, 500);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  const sortOrder = useSelector(
+    (state: { systemConfigReducer: { selectedCategory: string } }) =>
+      state.systemConfigReducer.sortOrder
+  );
 
   interface Task {
     id: string;
     [key: string]: any;
   }
+
+  const handleSearch = async (value: string) => {
+    if (value === "") {
+      getTaskData(dispatch);
+      return;
+    }
+
+    try {
+      const q = query(
+        collection(db, "tasks"),
+        where("userId", "==", auth?.currentUser?.uid),
+        orderBy("taskName"),
+        startAt(value),
+        endAt(value + "\uf8ff")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as object),
+      }));
+      dispatch(setAccessData({ type: "taskGetDetails", response: data }));
+    } catch (error) {
+      console.error("Error searching tasks:", error);
+    }
+  };
 
   const fetchTasksByCategory = async (categoryId: string) => {
     try {
@@ -77,7 +82,11 @@ const FilterCreateTasks = () => {
       let tasksQuery: any = tasksCollection;
 
       if (categoryId) {
-        tasksQuery = query(tasksCollection, where("categoryId", "==", categoryId));
+        tasksQuery = query(
+          tasksCollection,
+          where("userId", "==", auth?.currentUser?.uid),
+          where("categoryId", "==", categoryId)
+        );
       }
 
       const querySnapshot = await getDocs(tasksQuery);
@@ -92,34 +101,37 @@ const FilterCreateTasks = () => {
     }
   };
 
-  useEffect(() => {
-    if (selectedCategoryId === "") {
+  const handleCategoryChange = (categoryId: string) => {
+    dispatch(setAccessData({ type: "selectedCategory", response: categoryId }));
+    if (categoryId === "") {
       getTaskData(dispatch);
+    } else {
+      fetchTasksByCategory(categoryId);
     }
-    fetchTasksByCategory(selectedCategoryId);
-  }, [selectedCategoryId]);
+  };
+
+  const handleSort = () => {
+    const newOrder = sortOrder === "asc" ? "desc" : "asc";
+    dispatch(setAccessData({ type: "sortOrder", response: newOrder }));
+    getTaskData(dispatch, newOrder);
+  };
 
   return (
     <>
       <div
         className={`flex ${
-          isSmallScreen ? "flex-col gap-3" : "justify-between items-center mt-5"
+          isSmallScreen
+            ? "flex-col gap-3"
+            : "justify-between items-center sm:mt-5 mt-10"
         }`}
       >
-        <div className={`flex ${isSmallScreen ? "flex-col gap-2" : "gap-4"}`}>
-          <div>Filter By:</div>
-          <Box className={`flex ${isSmallScreen ? "flex-col gap-2" : "gap-2"}`}>
+        <div className={`flex ${isSmallScreen ? "flex-row gap-2" : "gap-4"}`}>
+          <Box className="flex flex-wrap items-center gap-3">
+            <div>Filter By:</div>
             <FormControl sx={{ width: "auto" }}>
               <Select
                 value={selectedCategoryId}
-                onChange={(event) =>
-                  dispatch(
-                    setAccessData({
-                      type: "selectedCategory",
-                      response: event.target.value,
-                    })
-                  )
-                }
+                onChange={(event) => handleCategoryChange(event.target.value)}
                 size="small"
                 displayEmpty
                 sx={{
@@ -140,7 +152,25 @@ const FilterCreateTasks = () => {
                 <MenuItem value="W">Work</MenuItem>
                 <MenuItem value="P">Personal</MenuItem>
               </Select>
+              
             </FormControl>
+            <Button
+              onClick={handleSort}
+              startIcon={sortOrder === "asc" ? <TbSortAscending /> : <TbSortDescending />}
+              sx={{
+                minWidth: 'auto',
+                padding: '4px 8px',
+                borderRadius: '16px',
+                fontSize: '10px',
+                backgroundColor: '#7B1984',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#641573'
+                }
+              }}
+            >
+              {`Sort By Due Date ${sortOrder === "asc" ? "↑" : "↓"}`}
+            </Button>
           </Box>
         </div>
 
@@ -156,7 +186,7 @@ const FilterCreateTasks = () => {
               }`}
               placeholder="Search Task name"
               required
-              onChange={(e) => setSearchTerm(e?.target?.value)}
+              onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
 
@@ -170,7 +200,7 @@ const FilterCreateTasks = () => {
             onClick={() => {
               setAddText(!addText);
               dispatch(setAccessData({ type: "taskDetails", response: {} }));
-              setAddText(true)
+              setAddText(true);
               setOpenAddModal(!openAddModal);
             }}
           >
@@ -178,12 +208,8 @@ const FilterCreateTasks = () => {
           </Button>
         </div>
 
-        {/* Add Task Modal */}
         {openAddModal && (
-          <AddTaskModal
-            addText={addText}
-            setOpenAddModal={setOpenAddModal}
-          />
+          <AddTaskModal addText={addText} setOpenAddModal={setOpenAddModal} />
         )}
       </div>
     </>

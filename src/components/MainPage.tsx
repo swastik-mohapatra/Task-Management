@@ -52,7 +52,12 @@ export default function BasicTabs() {
   }, []);
 
   if (isSmallScreen) {
-    return <ListView />;
+    return (
+      <>
+        <FilterCreateTasks />
+        <ListView />
+      </>
+    );
   }
 
   return (
@@ -112,7 +117,7 @@ export default function BasicTabs() {
               />
             </Tabs>
           </Box>
-          <FilterCreateTasks/>
+          <FilterCreateTasks />
           <CustomTabPanel value={value} index={0}>
             <ListView />
           </CustomTabPanel>
