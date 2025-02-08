@@ -80,7 +80,6 @@ export default function BasicTabs() {
               width="100"
               color="#FFFAEA"
               ariaLabel="grid-loading"
-              radius="12.5"
               wrapperClass="grid-wrapper"
             />
           </Box>
@@ -90,7 +89,7 @@ export default function BasicTabs() {
           <Box>
             <Tabs
               value={value}
-              onChange={(event: SyntheticEvent, newValue: number) =>
+              onChange={(_event: SyntheticEvent, newValue: number) =>
                 setValue(newValue)
               }
               aria-label="basic tabs example"

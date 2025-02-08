@@ -7,6 +7,7 @@ import {
   FormControl,
   MenuItem,
   Select,
+  SelectChangeEvent,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -30,7 +31,6 @@ import { getTaskData } from "../utils/taskGetService";
 
 interface AddTaskModalProps {
   addText: boolean;
-  openAddModal: boolean;
   setOpenAddModal: (value: boolean) => void;
 }
 
@@ -41,7 +41,6 @@ interface LogEntry {
 
 const AddTaskModal = ({
   addText,
-  openAddModal,
   setOpenAddModal,
 }: AddTaskModalProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -106,18 +105,19 @@ const AddTaskModal = ({
   };
 
   const handleChangeInput = (
-    event: React.ChangeEvent<{ name?: string; value: unknown }>
-  ) => {
-    const { name, value } = event.target;
-    if (name) {
-      dispatch(
-        setAccessData({
-          type: "taskDetails",
-          response: { ...taskDetail, [name]: value },
-        })
-      );
-    }
-  };
+      event: React.ChangeEvent<{ name?: string; value: unknown }> | SelectChangeEvent<any>
+    ) => {
+      const { name, value } = event.target;
+      if (name) {
+        dispatch(
+          setAccessData({
+            type: "taskDetails",
+            response: { ...taskDetail, [name]: value },
+          })
+        );
+      }
+    };
+  
 
   const submitTask = async () => {
     if (!taskDetail?.taskName) {
@@ -440,22 +440,22 @@ const AddTaskModal = ({
                 <div className="mt-2 text-xs text-gray-700">
                   <strong>Uploaded Files:</strong>
                   <ul className="list-disc pl-4">
-                    {taskDetail.files.map((file, index) => (
+                    {taskDetail.files.map((file: { url: string; name: string }, index: number) => (
                       <li key={index} className="flex items-center gap-2">
-                        {file.url.startsWith("http") && (
-                          <img
-                            src={file.url}
-                            alt="preview"
-                            className="w-16 h-16 object-cover rounded"
-                          />
-                        )}
-                        <span>{file.name}</span>
-                        <button
-                          className="text-red-500 hover:underline ml-2"
-                          onClick={() => handleRemoveFile(index)}
-                        >
-                          Remove
-                        </button>
+                      {file.url.startsWith("http") && (
+                        <img
+                        src={file?.url}
+                        alt="preview"
+                        className="w-16 h-16 object-cover rounded"
+                        />
+                      )}
+                      <span>{file?.name}</span>
+                      <button
+                        className="text-red-500 hover:underline ml-2"
+                        onClick={() => handleRemoveFile(index)}
+                      >
+                        Remove
+                      </button>
                       </li>
                     ))}
                   </ul>

@@ -1,5 +1,4 @@
 import { MdExpandMore } from "react-icons/md";
-import FilterCreateTasks from "../FilterCreateTasks";
 import {
   Accordion,
   AccordionDetails,
@@ -22,6 +21,9 @@ import {
   useSensor,
   useSensors,
   useDroppable,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
 } from "@dnd-kit/core";
 import { doc, updateDoc } from "firebase/firestore";
 import { getTaskData } from "../../utils/taskGetService";
@@ -30,7 +32,7 @@ import { useDispatch } from "react-redux";
 import { db } from "../../config/firebase";
 import { reorderTasks, setAccessData } from "../../redux/reducers/systemConfigReducer";
 
-const Droppable = ({ id, children }) => {
+const Droppable: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
   const { isOver, setNodeRef } = useDroppable({
     id,
   });
@@ -51,17 +53,16 @@ const Droppable = ({ id, children }) => {
 
 const ListView = () => {
   const [addTableRow, setAddTableRow] = useState(false);
-  const [addRow, setAddRow] = useState({});
-  const [activeId, setActiveId] = useState(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const dispatch = useDispatch();
 
   const getTaskDetails = useSelector(
-    (state) => state?.systemConfigReducer?.taskGetDetails
+    (state:any) => state?.systemConfigReducer?.taskGetDetails
   );
 
-  const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
-  const inProgressTasks = getTaskDetails.filter((row) => row.statusId === "P");
-  const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
+  const todoTasks = getTaskDetails.filter((row: { statusId: string; }) => row.statusId === "T");
+  const inProgressTasks = getTaskDetails.filter((row: { statusId: string; }) => row.statusId === "P");
+  const completedTasks = getTaskDetails.filter((row: { statusId: string; }) => row.statusId === "C");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -74,16 +75,16 @@ const ListView = () => {
     })
   );
 
-  const handleDragStart = (event) => {
-    setActiveId(event.active.id);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event?.active?.id?.toString() || null);
   };
 
-  const handleDragEnd = async (event) => {
-    const { active, over } = event;
+  const handleDragEnd = async (event:DragEndEvent) => {
+    const { over } = event;
     
     if (!over) return;
 
-    const draggedTask = getTaskDetails.find(task => task.id === active.id);
+    const draggedTask = getTaskDetails.find((task: { id: any; }) => task.id === activeId);
     if (!draggedTask) return;
 
     const statusMap = {
@@ -93,7 +94,7 @@ const ListView = () => {
     };
 
     if (over.id in statusMap) {
-      const newStatusInfo = statusMap[over?.id];
+      const newStatusInfo = statusMap[over?.id as keyof typeof statusMap];
       
       if (draggedTask.statusId !== newStatusInfo.id) {
          dispatch(setAccessData({ type: "loading", response: true }))
@@ -111,9 +112,9 @@ const ListView = () => {
         }
       }
     }
-    else if (active.id !== over.id) {
-      const oldIndex = getTaskDetails.findIndex(task => task.id === active.id);
-      const newIndex = getTaskDetails.findIndex(task => task.id === over.id);
+    else if (activeId !== over.id) {
+      const oldIndex: number = getTaskDetails.findIndex((task: { id: any }) => task.id === activeId);
+      const newIndex = getTaskDetails.findIndex((task: { id: any })  => task.id === over.id);
       
       const reorderedTasks = arrayMove(getTaskDetails, oldIndex, newIndex);
       dispatch(reorderTasks(reorderedTasks));
@@ -122,8 +123,8 @@ const ListView = () => {
     setActiveId(null);
   };
 
-  const handleDragOver = (event) => {
-    const { active, over } = event;
+  const handleDragOver = (event:DragOverEvent) => {
+    const { over } = event;
     if (!over) return;
   };
 
@@ -200,8 +201,6 @@ const ListView = () => {
                         rows={todoTasks}
                         addTableRow={addTableRow}
                         setAddTableRow={setAddTableRow}
-                        addRow={addRow}
-                        setAddRow={setAddRow}
                       />
                     ) : (
                       <div className="p-4 text-center text-gray-500">
@@ -228,8 +227,8 @@ const ListView = () => {
                     {inProgressTasks.length > 0 ? (
                       <DataTable
                         rows={inProgressTasks}
-                        addRow={addRow}
-                        setAddRow={setAddRow}
+                        addTableRow={addTableRow}
+                        setAddTableRow={setAddTableRow}
                       />
                     ) : (
                       <div className="p-4 text-center text-gray-500">
@@ -256,8 +255,8 @@ const ListView = () => {
                     {completedTasks.length > 0 ? (
                       <DataTable
                         rows={completedTasks}
-                        addRow={addRow}
-                        setAddRow={setAddRow}
+                        addTableRow={addTableRow}
+                        setAddTableRow={setAddTableRow}
                       />
                     ) : (
                       <div className="p-4 text-center text-gray-500">
@@ -272,7 +271,7 @@ const ListView = () => {
             <DragOverlay>
               {activeId ? (
                 <div className="bg-white shadow-lg rounded p-4">
-                  {getTaskDetails.find(task => task.id === activeId)?.taskName}
+                  {getTaskDetails.find((task: any) => task.id === activeId)?.taskName}
                 </div>
               ) : null}
             </DragOverlay>

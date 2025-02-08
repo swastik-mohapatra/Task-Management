@@ -4,7 +4,6 @@ import {
   FormControl,
   MenuItem,
   Select,
-  SelectChangeEvent,
   useMediaQuery,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -33,7 +32,7 @@ const FilterCreateTasks = () => {
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
 
   const selectedCategoryId = useSelector(
-    (state) => state?.systemConfigReducer?.selectedCategory
+    (state: { systemConfigReducer: { selectedCategory: string } }) => state.systemConfigReducer.selectedCategory
   );
 
   useEffect(() => {
@@ -54,7 +53,7 @@ const FilterCreateTasks = () => {
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data(),
+          ...(doc.data() as object),
         }));
         dispatch(setAccessData({ type: "taskGetDetails", response: data }));
       } catch (error) {
@@ -66,18 +65,25 @@ const FilterCreateTasks = () => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
-  const fetchTasksByCategory = async (categoryId) => {
+  interface Task {
+    id: string;
+    [key: string]: any;
+  }
+
+  const fetchTasksByCategory = async (categoryId: string) => {
     try {
-      let q = collection(db, "tasks");
+      const tasksCollection = collection(db, "tasks");
+
+      let tasksQuery: any = tasksCollection;
 
       if (categoryId) {
-        q = query(q, where("categoryId", "==", categoryId));
+        tasksQuery = query(tasksCollection, where("categoryId", "==", categoryId));
       }
 
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map((doc) => ({
+      const querySnapshot = await getDocs(tasksQuery);
+      const data: Task[] = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+        ...(doc.data() as object),
       }));
 
       dispatch(setAccessData({ type: "taskGetDetails", response: data }));
@@ -176,7 +182,6 @@ const FilterCreateTasks = () => {
         {openAddModal && (
           <AddTaskModal
             addText={addText}
-            openAddModal={openAddModal}
             setOpenAddModal={setOpenAddModal}
           />
         )}

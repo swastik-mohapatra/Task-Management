@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { auth } from "./config/firebase"; // Ensure correct path
+import { auth } from "./config/firebase"; 
 import { onAuthStateChanged, User } from "firebase/auth";
 
 import "./App.css";

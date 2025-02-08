@@ -1,4 +1,4 @@
-import { Children, MouseEvent, useState } from "react";
+import { Children, MouseEvent, ReactNode, useState } from "react";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import {
@@ -20,29 +20,17 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { CiCirclePlus } from "react-icons/ci";
 import dayjs from "dayjs";
 import { CSS } from "@dnd-kit/utilities";
-
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { collection, deleteDoc, doc } from "firebase/firestore";
+import {  deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { getTaskData } from "../../utils/taskGetService";
 import { useDispatch } from "react-redux";
 import AddTaskModal from "../AddTaskModal";
 import {
-  reorderTasks,
   setAccessData,
 } from "../../redux/reducers/systemConfigReducer";
 import { useSelector } from "react-redux";
@@ -52,12 +40,9 @@ interface DataTableProps {
   rows: TableRow[];
   addTableRow: boolean;
   setAddTableRow: (value: boolean) => void;
-  addRow: any;
-  setAddRow: (value: any) => void;
-  setListRows: (value: any) => void;
 }
 
-const DraggableRow = ({ row, children }) => {
+const DraggableRow = ({ row, children }: { row: TableRow; children: ReactNode }) => {
   const {
     attributes,
     listeners,
@@ -100,9 +85,6 @@ const DataTable = ({
   rows,
   addTableRow,
   setAddTableRow,
-  addRow,
-  setAddRow,
-  setListRows,
 }: DataTableProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [currentMenuId, setCurrentMenuId] = useState<string | null>(null);
@@ -136,14 +118,8 @@ const DataTable = ({
     (state: any) => state?.systemConfigReducer?.taskDetails
   );
 
-  const getTaskDetails = useSelector(
-    (state: any) => state?.systemConfigReducer?.taskGetDetails
-  );
-
-  const taskCollectionRef = collection(db, "tasks");
-
   const handleClickMenu = (
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: MouseEvent<HTMLButtonElement>,
     menuId: string
   ) => {
     event.stopPropagation(); 
@@ -151,8 +127,8 @@ const DataTable = ({
     setCurrentMenuId(menuId);
   };
 
-  const handleCloseMenu = (event?: React.MouseEvent) => {
-    if (event) {
+  const handleCloseMenu = (event: MouseEvent | object) => {
+    if (event && 'stopPropagation' in event) {
       event.stopPropagation(); 
     }
     setAnchorEl(null);
@@ -182,24 +158,7 @@ const DataTable = ({
     }
   };
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    
-    if (active.id !== over?.id) {
-      const oldIndex = getTaskDetails.findIndex(task => task.id === active.id);
-      const newIndex = getTaskDetails.findIndex(task => task.id === over?.id);
-      
-      const reorderedTasks = arrayMove(getTaskDetails, oldIndex, newIndex);
-      dispatch(reorderTasks(reorderedTasks));
-    }
-  };
-
-  const deleteTask = async (id) => {
+  const deleteTask = async (id:any) => {
     dispatch(setAccessData({ type: "loading", response: true }))
     try {
       const taskDoc = doc(db, "tasks", id);
@@ -275,7 +234,7 @@ const DataTable = ({
                       id="status-menu"
                       anchorEl={anchorEl}
                       open={currentMenuId === "status-menu"}
-                      onClose={handleCloseMenu}
+                      onClose={(event) => handleCloseMenu(event)}
                       MenuListProps={{
                         "aria-labelledby": "status-menu-button",
                       }}
@@ -300,7 +259,6 @@ const DataTable = ({
                                 },
                               })
                             );
-                            handleCloseMenu();
                           }}
                         >
                           {status}
@@ -355,7 +313,7 @@ const DataTable = ({
                                 },
                               })
                             );
-                            handleCloseMenu();
+                            handleCloseMenu({});
                           }}
                         >
                           {status}
@@ -424,7 +382,7 @@ const DataTable = ({
                         type="checkbox"
                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         onChange={(event) => {
-                          handleCheckboxChange(event, row?.id);
+                          handleCheckboxChange(event, row?.id?.toString());
                         }}
                         checked={taskIdDetails?.includes(row?.id)}
                       />
@@ -455,16 +413,16 @@ const DataTable = ({
                   <td className="px-6 py-4">
                     <IconButton
                       aria-controls={
-                        currentMenuId === row.id ? "menu" : undefined
+                        currentMenuId === row.id.toString() ? "menu" : undefined
                       }
                       aria-haspopup="true"
-                      onClick={(event) => handleClickMenu(event, row?.id)}
+                      onClick={(event) => handleClickMenu(event, row?.id?.toString())}
                     >
                       <IoIosMore />
                     </IconButton>
                     <Menu
                       anchorEl={anchorEl}
-                      open={currentMenuId === row?.id}
+                      open={currentMenuId === row?.id.toString()}
                       onClick={(e) => e.stopPropagation()}
                       onClose={handleCloseMenu}
                       sx={{
@@ -516,7 +474,7 @@ const DataTable = ({
         </SortableContext>
         {openAddModal && (
           <AddTaskModal
-            openAddModal={openAddModal}
+            addText={false}
             setOpenAddModal={setOpenAddModal}
           />
         )}

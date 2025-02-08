@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {  useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -22,8 +22,20 @@ import { getTaskData } from "../../utils/taskGetService";
 import { useDispatch } from "react-redux";
 import { setAccessData } from "../../redux/reducers/systemConfigReducer";
 import AddTaskModal from "../AddTaskModal";
+interface Card {
+  id: string;
+  taskName: string;
+  category: string;
+  dueDate?: string;
+  statusId: string;
+  categoryId?: string;  
+}
 
-const ListCard = ({ card }) => {
+interface ListCardProps {
+  card: Card;
+}
+
+const ListCard = ({ card }:ListCardProps) => {
   const {
     attributes,
     listeners,
@@ -41,10 +53,10 @@ const ListCard = ({ card }) => {
   };
 
   const [openAddModal, setOpenAddModal] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const dispatch = useDispatch();
 
-  const handleClickMenu = (event) => {
+  const handleClickMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
@@ -53,7 +65,7 @@ const ListCard = ({ card }) => {
     setAnchorEl(null);
   };
 
-  const deleteTask = async (id) => {
+  const deleteTask = async (id:any) => {
     dispatch(setAccessData({ type: "loading", response: true }));
     try {
       const taskDoc = doc(db, "tasks", id);
@@ -133,7 +145,7 @@ const ListCard = ({ card }) => {
       </Card>
       {openAddModal && (
         <AddTaskModal
-          openAddModal={openAddModal}
+          addText={false}
           setOpenAddModal={setOpenAddModal}
         />
       )}

@@ -6,14 +6,14 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { signOut } from "firebase/auth";
+import { signOut, User } from "firebase/auth";
 import { TbClipboardText } from "react-icons/tb";
 import { auth } from "../config/firebase";
 import { RiLogoutBoxLine } from "react-icons/ri";
 import { useState } from "react";
 
 interface NavBarProps {
-  user: String;
+  user: User;
 }
 
 const NavBar = ({ user }: NavBarProps) => {
@@ -48,8 +48,8 @@ const NavBar = ({ user }: NavBarProps) => {
         </div>
         <div className="flex justify-center items-center gap-2 text-gray-500 font-medium">
           <Avatar
-            alt={user?.displayName}
-            src={user?.photoURL}
+            alt={user?.displayName || undefined}
+            src={user?.photoURL || undefined}
             onClick={handleClick}
           />{" "}
           {isSmallScreen && (

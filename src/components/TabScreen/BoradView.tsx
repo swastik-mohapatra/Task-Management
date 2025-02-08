@@ -11,25 +11,60 @@ import {
   DragEndEvent,
   DragStartEvent,
 } from "@dnd-kit/core";
-import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { useSelector, useDispatch } from "react-redux";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { getTaskData } from "../../utils/taskGetService";
 import ListCard from "./ListCard";
-import { setAccessData } from "../../redux/reducers/systemConfigReducer";
+import {
+  reorderTasks,
+  setAccessData,
+} from "../../redux/reducers/systemConfigReducer";
+
+interface Row {
+  id: string;
+  statusId: string;
+  taskName: string;
+  category: string;
+  categoryId?: string;
+}
 
 const BoardView = () => {
   const dispatch = useDispatch();
   const getTaskDetails = useSelector(
-    (state) => state?.systemConfigReducer?.taskGetDetails
+    (state: { systemConfigReducer: { taskGetDetails: any[] } }) =>
+      state.systemConfigReducer.taskGetDetails
   );
 
-  const [activeId, setActiveId] = useState(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const todoTasks = getTaskDetails
+    .filter((row: Row) => row.statusId === "T")
+    .map((task) => ({
+      ...task,
+      category: "TODO",
+      categoryId: task.categoryId || "", // Ensure categoryId is included
+    }));
 
-  const todoTasks = getTaskDetails.filter((row) => row.statusId === "T");
-  const inProgressTasks = getTaskDetails.filter((row) => row.statusId === "P");
-  const completedTasks = getTaskDetails.filter((row) => row.statusId === "C");
+  const inProgressTasks = getTaskDetails
+    .filter((row: Row) => row.statusId === "P")
+    .map((task) => ({
+      ...task,
+      category: "In Progress",
+      categoryId: task.categoryId || "",
+    }));
+
+  const completedTasks = getTaskDetails
+    .filter((row: Row) => row.statusId === "C")
+    .map((task) => ({
+      ...task,
+      category: "Completed",
+      categoryId: task.categoryId || "",
+    }));
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -40,63 +75,84 @@ const BoardView = () => {
     useSensor(KeyboardSensor)
   );
 
-  const findContainer = (id) => {
-    if (todoTasks.find(task => task.id === id)) return "todo";
-    if (inProgressTasks.find(task => task.id === id)) return "inProgress";
-    if (completedTasks.find(task => task.id === id)) return "completed";
+  interface Task {
+    id: string;
+    statusId: string;
+    taskName: string;
+  }
+
+  const findContainer = (id: string): string | null => {
+    if (todoTasks.find((task: Task) => task.id === id)) return "todo";
+    if (inProgressTasks.find((task: Task) => task.id === id))
+      return "inProgress";
+    if (completedTasks.find((task: Task) => task.id === id)) return "completed";
     return null;
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id);
+    setActiveId(event.active.id.toString());
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over) return;
 
-    const activeContainer = findContainer(active.id);
-    const overContainer = over.data?.current?.sortable?.containerId || over.id;
+    const activeContainer = findContainer(active.id.toString());
+    const overContainer: "todo" | "inProgress" | "completed" =
+      over.data?.current?.sortable?.containerId || over.id;
 
-    const draggedTask = getTaskDetails.find(task => task.id === active.id);
+    const draggedTask = getTaskDetails.find((task) => task.id === active.id);
     if (!draggedTask) return;
-    
+
     if (activeContainer !== overContainer) {
       const statusMap = {
-        todo: { id: 'T', label: 'TODO' },
-        inProgress: { id: 'P', label: 'In Progress' },
-        completed: { id: 'C', label: 'Completed' }
+        todo: { id: "T", label: "TODO" },
+        inProgress: { id: "P", label: "In Progress" },
+        completed: { id: "C", label: "Completed" },
       };
 
       if (statusMap[overContainer]) {
-        dispatch(setAccessData({ type: "loading", response: true }))
+        dispatch(setAccessData({ type: "loading", response: true }));
         try {
           const taskRef = doc(db, "tasks", draggedTask.id);
           await updateDoc(taskRef, {
             statusId: statusMap[overContainer].id,
-            status: statusMap[overContainer].label
+            status: statusMap[overContainer].label,
           });
           await getTaskData(dispatch);
-          dispatch(setAccessData({ type: "loading", response: false }))
+          dispatch(setAccessData({ type: "loading", response: false }));
         } catch (error) {
           console.error("Error updating task status:", error);
-          dispatch(setAccessData({ type: "loading", response: false }))
+          dispatch(setAccessData({ type: "loading", response: false }));
         }
       }
-    } 
-    // Handle reordering within the same column
-    else if (active.id !== over.id) {
-      const oldIndex = getTaskDetails.findIndex(task => task.id === active.id);
-      const newIndex = getTaskDetails.findIndex(task => task.id === over.id);
+    } else if (active.id !== over.id) {
+      const oldIndex = getTaskDetails.findIndex(
+        (task) => task.id === active.id
+      );
+      const newIndex = getTaskDetails.findIndex((task) => task.id === over.id);
       const reorderedTasks = arrayMove(getTaskDetails, oldIndex, newIndex);
-      // Update your Redux store with reordered tasks if needed
+
+      dispatch(reorderTasks(reorderedTasks));
     }
 
     setActiveId(null);
   };
 
-  const DroppableContainer = ({ id, items, title, backgroundColor }) => (
+  interface DroppableContainerProps {
+    id: string;
+    items: any[];
+    title: string;
+    backgroundColor: string;
+  }
+
+  const DroppableContainer = ({
+    id,
+    items,
+    title,
+    backgroundColor,
+  }: DroppableContainerProps) => (
     <Card
       sx={{
         width: 400,
@@ -120,25 +176,20 @@ const BoardView = () => {
         >
           {title}
         </Typography>
-        <Typography 
-          variant="body2" 
-          sx={{ 
+        <Typography
+          variant="body2"
+          sx={{
             color: "text.secondary",
             minHeight: "100px",
           }}
         >
           <SortableContext
-            items={items.map(item => item.id)}
+            items={items.map((item) => item.id)}
             strategy={verticalListSortingStrategy}
             id={id}
           >
             {items.length > 0 ? (
-              items.map((task) => (
-                <ListCard
-                  key={task.id}
-                  card={task}
-                />
-              ))
+              items.map((task) => <ListCard card={task} />)
             ) : (
               <div className="text-center p-4">No Tasks to display</div>
             )}
@@ -180,7 +231,7 @@ const BoardView = () => {
         {activeId ? (
           <Card sx={{ width: 400, opacity: 0.8 }}>
             <CardContent>
-              {getTaskDetails.find(task => task.id === activeId)?.taskName}
+              {getTaskDetails.find((task) => task.id === activeId)?.taskName}
             </CardContent>
           </Card>
         ) : null}

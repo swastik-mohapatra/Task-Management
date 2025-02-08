@@ -1,4 +1,5 @@
 export interface TableRow {
+    [x: string]: any;
     id: number;
     taskName: string;
     dueDate: string;

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { auth, googleProvider } from "../../config/firebase";
-import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import loginImage from "../../assets/images/loginPage2.png";
 
 import { Button } from "@mui/material";
