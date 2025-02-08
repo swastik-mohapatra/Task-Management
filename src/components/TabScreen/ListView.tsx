@@ -151,6 +151,7 @@ const ListView = () => {
                       id="checkbox-all-search"
                       type="checkbox"
                       className="w-4 h-4 text-blue-800"
+                      disabled
                     />
                   </div>
                 </th>
@@ -184,7 +185,7 @@ const ListView = () => {
                 <AccordionDetails
                   sx={{ minHeight: "350px", backgroundColor: "#FFFAEA" }}
                 >
-                  <Box className="hidden sm:block">
+                  <Box className="hidden">
                     <Button
                       variant="text"
                       startIcon={<FiPlus />}
