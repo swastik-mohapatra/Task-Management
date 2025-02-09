@@ -70,7 +70,9 @@ const NavBar = ({ user }: NavBarProps) => {
               </MenuItem>
             </Menu>
           )}
-          {user?.displayName}
+          {isSmallScreen
+            ? user?.displayName?.split(" ")[0] || ""
+            : user?.displayName}
           {!isSmallScreen && (
             <Button
               variant="outlined"
